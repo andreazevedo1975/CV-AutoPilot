@@ -1,10 +1,13 @@
 // FIX: Implement the History component to display AI generation history, resolving a name collision with the browser's built-in 'History' object by naming the component 'HistoryView'.
-import React from 'react';
+import React, { useContext } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { HistoryItem } from '../types';
 import { Download } from './icons';
+import { ThemeContext } from '../App';
 
 const HistoryView: React.FC = () => {
+    const { colors } = useContext(ThemeContext);
+    const styles = getStyles(colors);
     const [history] = useLocalStorage<HistoryItem[]>('generationHistory', []);
 
     const handleExport = () => {
@@ -129,19 +132,22 @@ ${item.output}
                     })}
                 </ul>
             )}
+             <footer style={styles.footer}>
+                Copyright by André Azevedo
+            </footer>
         </div>
     );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
+const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
     container: { maxWidth: '800px' },
     pageHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
-    header: { color: '#1967d2' },
+    header: { color: colors.primary },
     exportButton: { 
         padding: '10px 20px', 
         fontSize: '16px', 
-        color: '#fff', 
-        backgroundColor: '#1967d2', 
+        color: colors.textOnPrimary, 
+        backgroundColor: colors.primary, 
         border: 'none', 
         borderRadius: '4px', 
         cursor: 'pointer', 
@@ -151,8 +157,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     exportButtonDisabled: {
         padding: '10px 20px', 
         fontSize: '16px', 
-        color: '#a0aec0', 
-        backgroundColor: '#4a5568',
+        color: colors.buttonDisabledText, 
+        backgroundColor: colors.buttonDisabledBg,
         border: 'none', 
         borderRadius: '4px', 
         cursor: 'not-allowed',
@@ -161,8 +167,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     list: { listStyle: 'none', padding: 0 },
     listItem: { 
-        backgroundColor: '#2d3748', 
-        border: '1px solid #4a5568',
+        backgroundColor: colors.surface, 
+        border: `1px solid ${colors.border}`,
         borderRadius: '8px', 
         marginBottom: '15px',
         padding: '15px',
@@ -175,37 +181,37 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     itemType: {
         fontSize: '18px',
-        color: '#1967d2',
+        color: colors.primary,
         fontWeight: 'bold',
     },
     itemTimestamp: {
         fontSize: '14px',
-        color: '#a0aec0',
+        color: colors.textSecondary,
     },
     summary: {
         cursor: 'pointer',
-        color: '#1967d2',
+        color: colors.primary,
         fontWeight: 'bold',
     },
     detailsContent: {
         marginTop: '15px',
-        borderTop: '1px solid #4a5568',
+        borderTop: `1px solid ${colors.border}`,
         paddingTop: '15px',
     },
     preformatted: {
         whiteSpace: 'pre-wrap',
         wordWrap: 'break-word',
-        background: '#1a202c',
+        background: colors.background,
         padding: '15px',
         borderRadius: '4px',
         maxHeight: '200px',
         overflowY: 'auto',
-        color: '#e2e8f0'
+        color: colors.textPrimary
     },
     leadSearchInfo: {
         display: 'flex',
         gap: '20px',
-        color: '#a0aec0',
+        color: colors.textSecondary,
         marginBottom: '10px'
     },
     leadList: {
@@ -214,13 +220,21 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     leadListItem: {
         padding: '10px',
-        backgroundColor: '#1a202c',
+        backgroundColor: colors.background,
         borderRadius: '4px',
         marginBottom: '8px',
-        borderLeft: '3px solid #1967d2'
+        borderLeft: `3px solid ${colors.primary}`
     },
-    contactInfo: { margin: '5px 0', color: '#cbd5e0', wordBreak: 'break-all' },
-    notes: { margin: '5px 0', color: '#a0aec0', fontSize: '14px' },
-};
+    contactInfo: { margin: '5px 0', color: colors.textPrimary, wordBreak: 'break-all' },
+    notes: { margin: '5px 0', color: colors.textSecondary, fontSize: '14px' },
+    footer: {
+        marginTop: '40px',
+        textAlign: 'center',
+        fontSize: '14px',
+        color: colors.textSecondary,
+        paddingTop: '20px',
+        borderTop: `1px solid ${colors.border}`
+    }
+});
 
 export default HistoryView;

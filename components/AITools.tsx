@@ -1,8 +1,9 @@
 // FIX: Implement the AITools component to provide AI-powered assistance for job applications.
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { CV, GenerationHistoryItem, HistoryItem, CVLayout } from '../types';
 import { optimizeCV, generateCoverLetter, enhancePhoto, generateCVLayouts, applyCVLayout } from '../services/geminiService';
+import { ThemeContext } from '../App';
 
 declare const jspdf: any;
 declare const docx: any;
@@ -10,6 +11,9 @@ declare const docx: any;
 type Tool = 'cv' | 'cover-letter' | 'photo' | 'layouts';
 
 const AITools: React.FC = () => {
+    const { colors } = useContext(ThemeContext);
+    const styles = getStyles(colors);
+
     const [activeTool, setActiveTool] = useState<Tool>('cv');
     const [cvs] = useLocalStorage<CV[]>('cvs', []);
     const [history, setHistory] = useLocalStorage<HistoryItem[]>('generationHistory', []);
@@ -342,11 +346,15 @@ const AITools: React.FC = () => {
                                 {layouts.map((layout, index) => (
                                     <div key={index} style={styles.layoutCard}>
                                         <h3 style={styles.layoutCardHeader}>{layout.name}</h3>
-                                        <pre style={styles.layoutCardPreview}>{layout.previewContent}</pre>
-                                        <p style={styles.layoutCardDescription}>{layout.description}</p>
-                                        <ul style={styles.layoutCardFeatures}>
-                                            {layout.keyFeatures.map((feature, i) => <li key={i}>{feature}</li>)}
-                                        </ul>
+                                        <div style={styles.layoutCardBody}>
+                                            <div style={styles.layoutCardInfo}>
+                                                <p style={styles.layoutCardDescription}>{layout.description}</p>
+                                                <ul style={styles.layoutCardFeatures}>
+                                                    {layout.keyFeatures.map((feature, i) => <li key={i}>{feature}</li>)}
+                                                </ul>
+                                            </div>
+                                            <pre style={styles.layoutCardPreview}>{layout.previewContent}</pre>
+                                        </div>
                                         <button style={styles.layoutApplyButton} onClick={() => handleLayoutApplyClick(layout)}>
                                             Aplicar este Layout
                                         </button>
@@ -386,37 +394,40 @@ const AITools: React.FC = () => {
                     </div>
                 )}
             </div>
+            <footer style={styles.footer}>
+                Copyright by André Azevedo
+            </footer>
         </div>
     );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
+const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
     container: { maxWidth: '900px' },
-    header: { color: '#1967d2' },
-    subHeader: { color: '#1967d2' },
+    header: { color: colors.primary },
+    subHeader: { color: colors.primary },
     tabs: { marginBottom: '20px', display: 'flex', flexWrap: 'wrap' },
-    tab: { padding: '10px 20px', border: '1px solid #4a5568', background: 'transparent', color: '#cbd5e0', cursor: 'pointer', fontSize: '16px', flex: '1 1 auto' },
-    activeTab: { padding: '10px 20px', border: '1px solid #1967d2', background: '#1967d2', color: '#fff', cursor: 'pointer', fontSize: '16px', flex: '1 1 auto' },
+    tab: { padding: '10px 20px', border: `1px solid ${colors.border}`, background: 'transparent', color: colors.textSecondary, cursor: 'pointer', fontSize: '16px', flex: '1 1 auto' },
+    activeTab: { padding: '10px 20px', border: `1px solid ${colors.primary}`, background: colors.primary, color: colors.textOnPrimary, cursor: 'pointer', fontSize: '16px', flex: '1 1 auto' },
     toolContainer: { display: 'flex', flexDirection: 'column', gap: '15px' },
-    select: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0' },
-    textarea: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0', minHeight: '150px' },
-    button: { padding: '10px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer' },
-    buttonDisabled: { padding: '10px 20px', fontSize: '16px', color: '#a0aec0', backgroundColor: '#4a5568', border: 'none', borderRadius: '4px', cursor: 'not-allowed' },
+    select: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText },
+    textarea: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText, minHeight: '150px' },
+    button: { padding: '10px 20px', fontSize: '16px', color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '4px', cursor: 'pointer' },
+    buttonDisabled: { padding: '10px 20px', fontSize: '16px', color: colors.buttonDisabledText, backgroundColor: colors.buttonDisabledBg, border: 'none', borderRadius: '4px', cursor: 'not-allowed' },
     error: { color: '#f56565' },
-    outputContainer: { marginTop: '20px', padding: '20px', backgroundColor: '#2d3748', border: '1px solid #4a5568', borderRadius: '8px' },
+    outputContainer: { marginTop: '20px', padding: '20px', backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' },
     outputHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
     downloadButtons: { display: 'flex', gap: '10px' },
-    downloadButton: { padding: '8px 12px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
-    outputPre: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: '#1a202c', color: '#e2e8f0', padding: '15px', borderRadius: '4px', maxHeight: '400px', overflowY: 'auto' },
+    downloadButton: { padding: '8px 12px', fontSize: '14px', color: colors.textOnPrimary, backgroundColor: colors.success, border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
+    outputPre: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: colors.background, color: colors.textPrimary, padding: '15px', borderRadius: '4px', maxHeight: '400px', overflowY: 'auto' },
     fileInput: { display: 'none' },
-    uploadButton: { display: 'inline-block', padding: '10px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer', textAlign: 'center', width: 'fit-content' },
+    uploadButton: { display: 'inline-block', padding: '10px 20px', fontSize: '16px', color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '4px', cursor: 'pointer', textAlign: 'center', width: 'fit-content' },
     imagePreviewContainer: { display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px', marginTop: '20px', marginBottom: '20px', width: '100%' },
-    imagePreview: { width: '250px', height: '250px', borderRadius: '8px', border: '1px solid #4a5568', objectFit: 'cover' },
-    imageLabel: { textAlign: 'center', color: '#cbd5e0', marginBottom: '5px' },
-    placeholderPreview: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2d3748', color: '#a0aec0', textAlign: 'center' },
-    loadingContainer: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2d3748', color: '#e2e8f0', flexDirection: 'column' },
+    imagePreview: { width: '250px', height: '250px', borderRadius: '8px', border: `1px solid ${colors.border}`, objectFit: 'cover' },
+    imageLabel: { textAlign: 'center', color: colors.textSecondary, marginBottom: '5px' },
+    placeholderPreview: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, color: colors.textSecondary, textAlign: 'center' },
+    loadingContainer: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface, color: colors.textPrimary, flexDirection: 'column' },
     // Styles for Layout Tool
-    layoutDescription: { color: '#a0aec0', marginBottom: '20px', lineHeight: 1.5 },
+    layoutDescription: { color: colors.textSecondary, marginBottom: '20px', lineHeight: 1.5 },
     layoutActionsContainer: { marginBottom: '20px' },
     layoutsGrid: {
         display: 'grid',
@@ -425,33 +436,52 @@ const styles: { [key: string]: React.CSSProperties } = {
         marginTop: '20px',
     },
     layoutCard: {
-        backgroundColor: '#2d3748',
-        border: '1px solid #4a5568',
+        backgroundColor: colors.surface,
+        border: `1px solid ${colors.border}`,
         borderRadius: '8px',
         padding: '20px',
         display: 'flex',
         flexDirection: 'column',
     },
-    layoutCardHeader: { color: '#1967d2', marginTop: 0, borderBottom: '1px solid #4a5568', paddingBottom: '10px' },
+    layoutCardHeader: { color: colors.primary, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', marginBottom: '15px' },
+    layoutCardBody: {
+        display: 'flex',
+        gap: '20px',
+        flexGrow: 1,
+    },
+    layoutCardInfo: {
+        flex: '1 1 60%',
+        display: 'flex',
+        flexDirection: 'column',
+    },
     layoutCardPreview: {
-        backgroundColor: '#1a202c',
-        border: '1px solid #4a5568',
+        backgroundColor: colors.background,
+        border: `1px solid ${colors.border}`,
         borderRadius: '4px',
         padding: '10px',
         fontSize: '12px',
-        maxHeight: '150px',
+        maxHeight: '250px',
         overflowY: 'auto',
         whiteSpace: 'pre-wrap',
         fontFamily: 'monospace',
-        color: '#cbd5e0',
-        margin: '15px 0',
+        color: colors.textSecondary,
+        margin: 0,
+        flex: '1 1 40%',
     },
-    layoutCardDescription: { flexGrow: 1, color: '#e2e8f0', fontSize: '15px' },
-    layoutCardFeatures: { paddingLeft: '20px', color: '#a0aec0', fontSize: '14px' },
-    layoutApplyButton: { padding: '10px 15px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '15px', alignSelf: 'flex-start' },
-    layoutApplySection: { marginTop: '30px', padding: '20px', backgroundColor: '#2c5282', borderRadius: '8px' },
+    layoutCardDescription: { flexGrow: 1, color: colors.textPrimary, fontSize: '15px' },
+    layoutCardFeatures: { paddingLeft: '20px', color: colors.textSecondary, fontSize: '14px', marginTop: '15px' },
+    layoutApplyButton: { padding: '10px 15px', fontSize: '14px', color: colors.textOnPrimary, backgroundColor: colors.success, border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '15px', alignSelf: 'flex-start' },
+    layoutApplySection: { marginTop: '30px', padding: '20px', backgroundColor: colors.primary, color: colors.textOnPrimary, borderRadius: '8px' },
     layoutApplyControls: { display: 'flex', gap: '10px', marginTop: '15px', alignItems: 'center' },
-    layoutSelect: { flexGrow: 1, padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0' },
-};
+    layoutSelect: { flexGrow: 1, padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText },
+    footer: {
+        marginTop: '40px',
+        textAlign: 'center',
+        fontSize: '14px',
+        color: colors.textSecondary,
+        paddingTop: '20px',
+        borderTop: `1px solid ${colors.border}`
+    }
+});
 
 export default AITools;

@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Lead, HistoryItem, LeadHistoryItem } from '../types';
 import { findLeads } from '../services/geminiService';
+import { ThemeContext } from '../App';
 
 type JobType = 'Todos' | 'Presencial' | 'Home Office' | 'Híbrido';
 type SearchSource = 'empresas' | 'sociais';
 
 const LeadFinder: React.FC = () => {
+    const { colors } = useContext(ThemeContext);
+    const styles = getStyles(colors);
+
     const [jobTitle, setJobTitle] = useState('');
     const [location, setLocation] = useState('');
     const [jobType, setJobType] = useState<JobType>('Todos');
@@ -174,7 +178,7 @@ Atenciosamente,
                                 <div style={styles.leadInfo}>
                                     <strong>{lead.companyName}</strong>
                                     <p style={styles.contactInfo}>
-                                        <a href={lead.contactInfo.startsWith('http') ? lead.contactInfo : `mailto:${lead.contactInfo}`} target="_blank" rel="noopener noreferrer">{lead.contactInfo}</a>
+                                        <a href={lead.contactInfo.startsWith('http') ? lead.contactInfo : `mailto:${lead.contactInfo}`} target="_blank" rel="noopener noreferrer" style={{color: colors.primary}}>{lead.contactInfo}</a>
                                     </p>
                                     <p style={styles.notes}><em>{lead.notes}</em></p>
                                 </div>
@@ -186,33 +190,36 @@ Atenciosamente,
                     </ul>
                 </div>
             )}
+             <footer style={styles.footer}>
+                Copyright by André Azevedo
+            </footer>
         </div>
     );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
+const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
     container: { maxWidth: '800px' },
-    header: { color: '#1967d2' },
-    description: { color: '#a0aec0', marginBottom: '20px', lineHeight: 1.5 },
-    subHeader: { color: '#1967d2', margin: 0 },
-    form: { display: 'flex', flexDirection: 'column', gap: '15px', padding: '20px', backgroundColor: '#2d3748', borderRadius: '8px', border: '1px solid #4a5568', },
+    header: { color: colors.primary },
+    description: { color: colors.textSecondary, marginBottom: '20px', lineHeight: 1.5 },
+    subHeader: { color: colors.primary, margin: 0 },
+    form: { display: 'flex', flexDirection: 'column', gap: '15px', padding: '20px', backgroundColor: colors.surface, borderRadius: '8px', border: `1px solid ${colors.border}` },
     inputGroup: { display: 'flex', flexDirection: 'column', gap: '10px' },
-    input: { padding: '12px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#ffffff' },
+    input: { padding: '12px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText },
     filterContainer: { display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' },
     filterGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
-    filterLabel: { fontWeight: 'bold', color: '#cbd5e0', marginBottom: '5px' },
+    filterLabel: { fontWeight: 'bold', color: colors.textPrimary, marginBottom: '5px' },
     radioLabel: { display: 'flex', alignItems: 'center', gap: '5px', cursor: 'pointer' },
-    button: { padding: '12px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer' },
+    button: { padding: '12px 20px', fontSize: '16px', color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '4px', cursor: 'pointer' },
     error: { color: '#f56565', textAlign: 'center', marginTop: '10px' },
     resultsContainer: { marginTop: '30px' },
-    resultsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' },
+    resultsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' },
     resultActions: { display: 'flex', gap: '10px' },
-    downloadButton: { padding: '10px 15px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer' },
+    downloadButton: { padding: '10px 15px', fontSize: '14px', color: colors.textOnPrimary, backgroundColor: colors.success, border: 'none', borderRadius: '4px', cursor: 'pointer' },
     saveButton: {
         padding: '10px 15px',
         fontSize: '14px',
-        color: '#fff',
-        backgroundColor: '#1967d2',
+        color: colors.textOnPrimary,
+        backgroundColor: colors.primary,
         border: 'none',
         borderRadius: '4px',
         cursor: 'pointer'
@@ -220,18 +227,26 @@ const styles: { [key: string]: React.CSSProperties } = {
     saveButtonSaved: {
         padding: '10px 15px',
         fontSize: '14px',
-        color: '#a0aec0',
-        backgroundColor: '#4a5568',
+        color: colors.buttonDisabledText,
+        backgroundColor: colors.buttonDisabledBg,
         border: 'none',
         borderRadius: '4px',
         cursor: 'not-allowed'
     },
     list: { listStyle: 'none', padding: 0 },
-    listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#2d3748', borderRadius: '8px', border: '1px solid #4a5568', marginBottom: '10px', flexWrap: 'wrap', gap: '10px' },
+    listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: colors.surface, borderRadius: '8px', border: `1px solid ${colors.border}`, marginBottom: '10px', flexWrap: 'wrap', gap: '10px' },
     leadInfo: { flex: '1 1 300px' },
-    contactInfo: { margin: '5px 0', color: '#cbd5e0', wordBreak: 'break-all' },
-    notes: { margin: '5px 0', color: '#a0aec0', fontSize: '14px' },
-    emailButton: { padding: '8px 12px', fontSize: '14px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' },
-};
+    contactInfo: { margin: '5px 0', color: colors.textPrimary, wordBreak: 'break-all' },
+    notes: { margin: '5px 0', color: colors.textSecondary, fontSize: '14px' },
+    emailButton: { padding: '8px 12px', fontSize: '14px', color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' },
+    footer: {
+        marginTop: '40px',
+        textAlign: 'center',
+        fontSize: '14px',
+        color: colors.textSecondary,
+        paddingTop: '20px',
+        borderTop: `1px solid ${colors.border}`
+    }
+});
 
 export default LeadFinder;

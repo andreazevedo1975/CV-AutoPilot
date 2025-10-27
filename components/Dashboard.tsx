@@ -1,9 +1,13 @@
 // FIX: Implement the Dashboard component to display and manage job applications.
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Application, ApplicationStatus } from '../types';
+import { ThemeContext } from '../App';
 
 const Dashboard: React.FC = () => {
+    const { colors } = useContext(ThemeContext);
+    const styles = getStyles(colors);
+
     const [applications, setApplications] = useLocalStorage<Application[]>('applications', []);
     const [jobTitle, setJobTitle] = useState('');
     const [companyName, setCompanyName] = useState('');
@@ -52,7 +56,7 @@ const Dashboard: React.FC = () => {
                              <li key={app.id} style={styles.listItem}>
                                 <div style={{ flex: 1 }}>
                                     <strong>{app.jobTitle}</strong> em {app.companyName}
-                                    <div style={{ fontSize: '14px', color: '#a0aec0', marginTop: '4px' }}>
+                                    <div style={{ fontSize: '14px', color: colors.textSecondary, marginTop: '4px' }}>
                                         <span>Candidatou-se em: {app.dateApplied}</span>
                                         <span style={{ marginLeft: '12px' }}>Status: {app.status}</span>
                                     </div>
@@ -69,31 +73,42 @@ const Dashboard: React.FC = () => {
                     </ul>
                 )}
             </div>
+            <footer style={styles.footer}>
+                Copyright by André Azevedo
+            </footer>
         </div>
     );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
+const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
     container: { maxWidth: '800px' },
-    header: { color: '#1967d2' },
-    subHeader: { color: '#1967d2', borderBottom: '1px solid #4a5568', paddingBottom: '10px', marginTop: '30px' },
-    form: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '20px', backgroundColor: '#2d3748', borderRadius: '8px', border: '1px solid #4a5568', },
-    input: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0' },
-    select: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0' },
-    button: { padding: '10px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer' },
+    header: { color: colors.primary },
+    subHeader: { color: colors.primary, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', marginTop: '30px' },
+    form: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '20px', backgroundColor: colors.surface, borderRadius: '8px', border: `1px solid ${colors.border}`, },
+    input: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText },
+    select: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText },
+    button: { padding: '10px 20px', fontSize: '16px', color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '4px', cursor: 'pointer' },
     listContainer: { marginTop: '30px' },
     list: { listStyle: 'none', padding: 0 },
-    listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#2d3748', borderRadius: '8px', border: '1px solid #4a5568', marginBottom: '10px' },
+    listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: colors.surface, borderRadius: '8px', border: `1px solid ${colors.border}`, marginBottom: '10px' },
     linkButton: {
         padding: '8px 12px',
-        backgroundColor: '#1967d2',
-        color: '#fff',
+        backgroundColor: colors.primary,
+        color: colors.textOnPrimary,
         textDecoration: 'none',
         borderRadius: '4px',
         fontWeight: 500,
         fontSize: '14px',
         whiteSpace: 'nowrap',
+    },
+    footer: {
+        marginTop: '40px',
+        textAlign: 'center',
+        fontSize: '14px',
+        color: colors.textSecondary,
+        paddingTop: '20px',
+        borderTop: `1px solid ${colors.border}`
     }
-};
+});
 
 export default Dashboard;

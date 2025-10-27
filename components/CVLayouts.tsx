@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { CV, CVLayout } from '../types';
 import { generateCVLayouts, applyCVLayout } from '../services/geminiService';
+import { ThemeContext } from '../App';
 
 declare const jspdf: any;
 declare const docx: any;
 
 const CVLayouts: React.FC = () => {
+    const { colors } = useContext(ThemeContext);
+    const styles = getStyles(colors);
+
     const [layouts, setLayouts] = useState<CVLayout[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -155,18 +159,21 @@ const CVLayouts: React.FC = () => {
                     <pre style={styles.outputPre}>{restructuredCv}</pre>
                 </div>
             )}
+            <footer style={styles.footer}>
+                Copyright by André Azevedo
+            </footer>
         </div>
     );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
+const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
     container: { maxWidth: '900px' },
-    header: { color: '#1967d2' },
-    description: { color: '#a0aec0', marginBottom: '20px', lineHeight: 1.5 },
-    subHeader: { color: '#1967d2', margin: 0 },
+    header: { color: colors.primary },
+    description: { color: colors.textSecondary, marginBottom: '20px', lineHeight: 1.5 },
+    subHeader: { color: colors.primary, margin: 0 },
     actionsContainer: { marginBottom: '20px' },
-    button: { padding: '12px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer' },
-    buttonDisabled: { padding: '12px 20px', fontSize: '16px', color: '#a0aec0', backgroundColor: '#4a5568', border: 'none', borderRadius: '4px', cursor: 'not-allowed' },
+    button: { padding: '12px 20px', fontSize: '16px', color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '4px', cursor: 'pointer' },
+    buttonDisabled: { padding: '12px 20px', fontSize: '16px', color: colors.buttonDisabledText, backgroundColor: colors.buttonDisabledBg, border: 'none', borderRadius: '4px', cursor: 'not-allowed' },
     error: { color: '#f56565', textAlign: 'center', marginTop: '10px' },
     layoutsGrid: {
         display: 'grid',
@@ -175,14 +182,14 @@ const styles: { [key: string]: React.CSSProperties } = {
         marginTop: '20px',
     },
     layoutCard: {
-        backgroundColor: '#2d3748',
-        border: '1px solid #4a5568',
+        backgroundColor: colors.surface,
+        border: `1px solid ${colors.border}`,
         borderRadius: '8px',
         padding: '20px',
         display: 'flex',
         flexDirection: 'column',
     },
-    cardHeader: { color: '#1967d2', marginTop: 0, borderBottom: '1px solid #4a5568', paddingBottom: '10px', marginBottom: '15px' },
+    cardHeader: { color: colors.primary, marginTop: 0, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', marginBottom: '15px' },
     cardBody: {
         display: 'flex',
         gap: '20px',
@@ -194,8 +201,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         flexDirection: 'column',
     },
     cardPreview: {
-        backgroundColor: '#1a202c',
-        border: '1px solid #4a5568',
+        backgroundColor: colors.background,
+        border: `1px solid ${colors.border}`,
         borderRadius: '4px',
         padding: '10px',
         fontSize: '12px',
@@ -203,21 +210,29 @@ const styles: { [key: string]: React.CSSProperties } = {
         overflowY: 'auto',
         whiteSpace: 'pre-wrap',
         fontFamily: 'monospace',
-        color: '#cbd5e0',
+        color: colors.textSecondary,
         margin: 0,
         flex: '1 1 40%',
     },
-    cardDescription: { flexGrow: 1, color: '#e2e8f0', fontSize: '15px' },
-    cardFeatures: { paddingLeft: '20px', color: '#a0aec0', fontSize: '14px', marginTop: '15px' },
-    applyButton: { padding: '10px 15px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '15px', alignSelf: 'flex-start' },
-    applySection: { marginTop: '30px', padding: '20px', backgroundColor: '#2c5282', borderRadius: '8px' },
+    cardDescription: { flexGrow: 1, color: colors.textPrimary, fontSize: '15px' },
+    cardFeatures: { paddingLeft: '20px', color: colors.textSecondary, fontSize: '14px', marginTop: '15px' },
+    applyButton: { padding: '10px 15px', fontSize: '14px', color: colors.textOnPrimary, backgroundColor: colors.success, border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '15px', alignSelf: 'flex-start' },
+    applySection: { marginTop: '30px', padding: '20px', backgroundColor: colors.primary, color: colors.textOnPrimary, borderRadius: '8px' },
     applyControls: { display: 'flex', gap: '10px', marginTop: '15px', alignItems: 'center' },
-    select: { flexGrow: 1, padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0' },
-    outputContainer: { marginTop: '30px', padding: '20px', backgroundColor: '#2d3748', border: '1px solid #4a5568', borderRadius: '8px' },
+    select: { flexGrow: 1, padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText },
+    outputContainer: { marginTop: '30px', padding: '20px', backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px' },
     outputHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
     downloadButtons: { display: 'flex', gap: '10px' },
-    downloadButton: { padding: '8px 12px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
-    outputPre: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: '#1a202c', color: '#e2e8f0', padding: '15px', borderRadius: '4px', maxHeight: '400px', overflowY: 'auto' },
-};
+    downloadButton: { padding: '8px 12px', fontSize: '14px', color: colors.textOnPrimary, backgroundColor: colors.success, border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
+    outputPre: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: colors.background, color: colors.textPrimary, padding: '15px', borderRadius: '4px', maxHeight: '400px', overflowY: 'auto' },
+    footer: {
+        marginTop: '40px',
+        textAlign: 'center',
+        fontSize: '14px',
+        color: colors.textSecondary,
+        paddingTop: '20px',
+        borderTop: `1px solid ${colors.border}`
+    }
+});
 
 export default CVLayouts;

@@ -1,15 +1,19 @@
 // FIX: Implement the CVManager component to allow users to add and manage their CVs.
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { CV } from '../types';
 import { analyzeCV } from '../services/geminiService';
+import { ThemeContext } from '../App';
 
 // Declarations for libraries loaded via CDN
 declare const mammoth: any;
 declare const pdfjsLib: any;
 
 const CVManager: React.FC = () => {
+    const { colors } = useContext(ThemeContext);
+    const styles = getStyles(colors);
+
     const [cvs, setCvs] = useLocalStorage<CV[]>('cvs', []);
     const [cvName, setCvName] = useState('');
     const [cvContent, setCvContent] = useState('');
@@ -172,40 +176,43 @@ const CVManager: React.FC = () => {
                     </ul>
                 )}
             </div>
+            <footer style={styles.footer}>
+                Copyright by André Azevedo
+            </footer>
         </div>
     );
 };
 
-const styles: { [key: string]: React.CSSProperties } = {
+const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
     container: { maxWidth: '800px' },
-    header: { color: '#1967d2' },
-    subHeader: { color: '#1967d2', borderBottom: '1px solid #4a5568', paddingBottom: '10px', marginTop: '30px' },
-    form: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '20px', backgroundColor: '#2d3748', borderRadius: '8px', border: '1px solid #4a5568', },
+    header: { color: colors.primary },
+    subHeader: { color: colors.primary, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', marginTop: '30px' },
+    form: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '20px', backgroundColor: colors.surface, borderRadius: '8px', border: `1px solid ${colors.border}` },
     uploadBox: {
-        border: '2px dashed #4a5568',
+        border: `2px dashed ${colors.border}`,
         borderRadius: '8px',
         padding: '20px',
         textAlign: 'center',
         cursor: 'pointer',
-        backgroundColor: '#1a202c',
+        backgroundColor: colors.background,
         marginBottom: '10px',
         transition: 'background-color 0.2s, border-color 0.2s',
     },
     uploadLabel: {
-        color: '#a0aec0',
+        color: colors.textSecondary,
         fontWeight: 500,
     },
     fileInput: {
         display: 'none',
     },
-    input: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#ffffff' },
-    textarea: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#ffffff', minHeight: '200px' },
-    button: { padding: '10px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer' },
+    input: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText },
+    textarea: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText, minHeight: '200px' },
+    button: { padding: '10px 20px', fontSize: '16px', color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '4px', cursor: 'pointer' },
     buttonDisabled: {
         padding: '10px 20px',
         fontSize: '16px',
-        color: '#a0aec0',
-        backgroundColor: '#4a5568',
+        color: colors.buttonDisabledText,
+        backgroundColor: colors.buttonDisabledBg,
         border: 'none',
         borderRadius: '4px',
         cursor: 'not-allowed',
@@ -214,9 +221,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     list: { listStyle: 'none', padding: 0 },
     listItem: { 
         padding: '15px', 
-        backgroundColor: '#2d3748', 
+        backgroundColor: colors.surface, 
         borderRadius: '8px', 
-        border: '1px solid #4a5568', 
+        border: `1px solid ${colors.border}`, 
         marginBottom: '10px',
         transition: 'box-shadow 0.2s',
     },
@@ -227,15 +234,15 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     cvName: {
         fontWeight: 'bold',
-        color: '#1967d2',
+        color: colors.primary,
         fontSize: '1.1em'
     },
     analyzeButton: {
         padding: '8px 12px',
         fontSize: '14px',
         fontWeight: 500,
-        color: '#fff',
-        backgroundColor: '#34a853',
+        color: colors.textOnPrimary,
+        backgroundColor: colors.success,
         border: 'none',
         borderRadius: '4px',
         cursor: 'pointer',
@@ -245,8 +252,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         padding: '8px 12px',
         fontSize: '14px',
         fontWeight: 500,
-        color: '#a0aec0',
-        backgroundColor: '#4a5568',
+        color: colors.buttonDisabledText,
+        backgroundColor: colors.buttonDisabledBg,
         border: 'none',
         borderRadius: '4px',
         cursor: 'not-allowed',
@@ -254,10 +261,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     analysisResult: {
         marginTop: '15px',
         padding: '0 15px 15px 15px',
-        borderTop: '1px solid #4a5568',
+        borderTop: `1px solid ${colors.border}`,
         lineHeight: 1.6,
-        color: '#e2e8f0',
+        color: colors.textPrimary,
+    },
+    footer: {
+        marginTop: '40px',
+        textAlign: 'center',
+        fontSize: '14px',
+        color: colors.textSecondary,
+        paddingTop: '20px',
+        borderTop: `1px solid ${colors.border}`
     }
-};
+});
 
 export default CVManager;

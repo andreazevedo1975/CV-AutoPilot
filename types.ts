@@ -60,3 +60,5 @@ export interface CVLayout {
     keyFeatures: string[];
     previewContent: string;
 }
+
+export type Theme = 'light' | 'dark';
