@@ -36,3 +36,9 @@ export interface ChatMessage {
   text: string;
   sources?: { uri: string; title: string }[];
 }
+
+export interface Lead {
+  companyName: string;
+  contactInfo: string;
+  notes: string;
+}

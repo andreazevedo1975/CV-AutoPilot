@@ -2,50 +2,114 @@
 import React from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { GenerationHistoryItem } from '../types';
+import { Download } from './icons';
 
 const HistoryView: React.FC = () => {
     const [history] = useLocalStorage<GenerationHistoryItem[]>('generationHistory', []);
 
-    if (history.length === 0) {
-        return (
-            <div style={styles.container}>
-                <h1 style={styles.header}>Histórico de Gerações</h1>
-                <p>Nenhum histórico ainda. Use as Ferramentas de IA para gerar conteúdo.</p>
-            </div>
-        );
-    }
+    const handleExport = () => {
+        if (history.length === 0) return;
     
+        const formattedHistory = history.map(item => {
+            return `
+==================================================
+Tipo: ${item.type}
+Data: ${new Date(item.timestamp).toLocaleString()}
+==================================================
+
+[Currículo de Entrada]
+----------------------
+${item.inputCv}
+
+[Descrição da Vaga de Entrada]
+------------------------------
+${item.inputJobDescription}
+
+[Resultado Gerado]
+------------------
+${item.output}
+`;
+        }).join('\n\n');
+    
+        const blob = new Blob([formattedHistory], { type: 'text/plain;charset=utf-8' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `historico-cv-autopilot-${new Date().toISOString().split('T')[0]}.txt`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+    };
+
     return (
         <div style={styles.container}>
-            <h1 style={styles.header}>Histórico de Gerações</h1>
-            <ul style={styles.list}>
-                {history.map((item) => (
-                    <li key={item.id} style={styles.listItem}>
-                        <div style={styles.itemHeader}>
-                            <strong style={styles.itemType}>{item.type}</strong>
-                            <span style={styles.itemTimestamp}>{new Date(item.timestamp).toLocaleString()}</span>
-                        </div>
-                        <details>
-                            <summary style={styles.summary}>Ver Detalhes</summary>
-                            <div style={styles.detailsContent}>
-                                <h4>Currículo de Entrada:</h4>
-                                <pre style={styles.preformatted}>{item.inputCv}</pre>
-                                <h4>Descrição da Vaga de Entrada:</h4>
-                                <pre style={styles.preformatted}>{item.inputJobDescription}</pre>
-                                <h4>Resultado:</h4>
-                                <pre style={styles.preformatted}>{item.output}</pre>
+            <div style={styles.pageHeader}>
+                <h1 style={styles.header}>Histórico de Gerações</h1>
+                <button 
+                    onClick={handleExport} 
+                    style={history.length === 0 ? styles.exportButtonDisabled : styles.exportButton} 
+                    disabled={history.length === 0}
+                >
+                    <Download />
+                    Exportar Histórico
+                </button>
+            </div>
+            {history.length === 0 ? (
+                <p>Nenhum histórico ainda. Use as Ferramentas de IA para gerar conteúdo.</p>
+            ) : (
+                <ul style={styles.list}>
+                    {history.map((item) => (
+                        <li key={item.id} style={styles.listItem}>
+                            <div style={styles.itemHeader}>
+                                <strong style={styles.itemType}>{item.type}</strong>
+                                <span style={styles.itemTimestamp}>{new Date(item.timestamp).toLocaleString()}</span>
                             </div>
-                        </details>
-                    </li>
-                ))}
-            </ul>
+                            <details>
+                                <summary style={styles.summary}>Ver Detalhes</summary>
+                                <div style={styles.detailsContent}>
+                                    <h4>Currículo de Entrada:</h4>
+                                    <pre style={styles.preformatted}>{item.inputCv}</pre>
+                                    <h4>Descrição da Vaga de Entrada:</h4>
+                                    <pre style={styles.preformatted}>{item.inputJobDescription}</pre>
+                                    <h4>Resultado:</h4>
+                                    <pre style={styles.preformatted}>{item.output}</pre>
+                                </div>
+                            </details>
+                        </li>
+                    ))}
+                </ul>
+            )}
         </div>
     );
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
     container: { maxWidth: '800px' },
+    pageHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
     header: { color: '#333' },
+    exportButton: { 
+        padding: '10px 20px', 
+        fontSize: '16px', 
+        color: '#fff', 
+        backgroundColor: '#1967d2', 
+        border: 'none', 
+        borderRadius: '4px', 
+        cursor: 'pointer', 
+        display: 'flex', 
+        alignItems: 'center',
+    },
+    exportButtonDisabled: {
+        padding: '10px 20px', 
+        fontSize: '16px', 
+        color: '#fff', 
+        backgroundColor: '#9e9e9e',
+        border: 'none', 
+        borderRadius: '4px', 
+        cursor: 'not-allowed',
+        display: 'flex', 
+        alignItems: 'center',
+    },
     list: { listStyle: 'none', padding: 0 },
     listItem: { 
         backgroundColor: '#fff', 

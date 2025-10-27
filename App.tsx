@@ -5,9 +5,10 @@ import AITools from './components/AITools';
 import CVManager from './components/CVManager';
 import HistoryView from './components/History';
 import CreativeStudio from './components/CreativeStudio';
-import { Briefcase, Wand, FileText, Clock, Sparkles } from './components/icons';
+import LeadFinder from './components/LeadFinder';
+import { Briefcase, Wand, FileText, Clock, Sparkles, AutopilotIcon, Target } from './components/icons';
 
-type View = 'dashboard' | 'cv-manager' | 'ai-tools' | 'history' | 'creative-studio';
+type View = 'dashboard' | 'cv-manager' | 'ai-tools' | 'history' | 'creative-studio' | 'lead-finder';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('cv-manager');
@@ -24,6 +25,8 @@ const App: React.FC = () => {
         return <HistoryView />;
       case 'creative-studio':
         return <CreativeStudio />;
+      case 'lead-finder':
+        return <LeadFinder />;
       default:
         return <CVManager />;
     }
@@ -32,9 +35,10 @@ const App: React.FC = () => {
   const navItems = [
     { id: 'cv-manager', label: 'Gerenciador de Currículos', icon: <FileText /> },
     { id: 'ai-tools', label: 'Ferramentas de IA', icon: <Wand /> },
+    { id: 'lead-finder', label: 'Buscador de Leads', icon: <Target /> },
     { id: 'dashboard', label: 'Painel de Candidaturas', icon: <Briefcase /> },
     { id: 'history', label: 'Histórico de Gerações', icon: <Clock /> },
-    { id: 'creative-studio', label: 'Estúdio Criativo', icon: <Sparkles /> },
+    { id: 'creative-studio', label: 'Orientador de RH', icon: <Sparkles /> },
   ];
 
   // Inlined styles to avoid needing a separate CSS file and to match the self-contained component style.
@@ -85,6 +89,8 @@ const App: React.FC = () => {
   };
 
   const headerStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
     fontSize: '24px',
     fontWeight: 'bold',
     color: '#1967d2',
@@ -96,7 +102,10 @@ const App: React.FC = () => {
   return (
     <div style={bodyStyle}>
       <nav style={sidebarStyle}>
-        <h1 style={headerStyle}>CV-AutoPilot</h1>
+        <h1 style={headerStyle}>
+          <AutopilotIcon />
+          CV-AutoPilot
+        </h1>
         {navItems.map(item => (
           <div
             key={item.id}

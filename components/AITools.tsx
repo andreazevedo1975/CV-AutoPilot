@@ -4,6 +4,9 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { CV, GenerationHistoryItem } from '../types';
 import { optimizeCV, generateCoverLetter } from '../services/geminiService';
 
+declare const jspdf: any;
+declare const docx: any;
+
 type Tool = 'cv' | 'cover-letter';
 
 const AITools: React.FC = () => {
@@ -60,6 +63,46 @@ const AITools: React.FC = () => {
         }
     };
     
+    const handleSaveAsPdf = () => {
+        const { jsPDF } = jspdf;
+        const doc = new jsPDF();
+        
+        const margin = 15;
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const textLines = doc.splitTextToSize(output, pageWidth - margin * 2);
+    
+        doc.text(textLines, margin, margin);
+        const fileName = activeTool === 'cv' ? 'curriculo-otimizado.pdf' : 'carta-de-apresentacao.pdf';
+        doc.save(fileName);
+    };
+    
+    const handleSaveAsDocx = () => {
+        const paragraphs = output.split('\n').map(text => 
+            new docx.Paragraph({
+                children: [new docx.TextRun(text)],
+            })
+        );
+    
+        const doc = new docx.Document({
+            sections: [{
+                properties: {},
+                children: paragraphs,
+            }],
+        });
+    
+        docx.Packer.toBlob(doc).then((blob: Blob) => {
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const fileName = activeTool === 'cv' ? 'curriculo-otimizado.docx' : 'carta-de-apresentacao.docx';
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        });
+    };
+
     return (
         <div style={styles.container}>
             <h1 style={styles.header}>Ferramentas de IA</h1>
@@ -86,7 +129,13 @@ const AITools: React.FC = () => {
                 {error && <p style={styles.error}>{error}</p>}
                 {output && (
                     <div style={styles.outputContainer}>
-                        <h2>Resultado</h2>
+                        <div style={styles.outputHeader}>
+                            <h2>Resultado</h2>
+                            <div style={styles.downloadButtons}>
+                                <button onClick={handleSaveAsPdf} style={styles.downloadButton}>Salvar como PDF</button>
+                                <button onClick={handleSaveAsDocx} style={styles.downloadButton}>Salvar como DOCX</button>
+                            </div>
+                        </div>
                         <pre style={styles.outputPre}>{output}</pre>
                     </div>
                 )}
@@ -107,6 +156,9 @@ const styles: { [key: string]: React.CSSProperties } = {
     button: { padding: '10px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer' },
     error: { color: 'red' },
     outputContainer: { marginTop: '20px', padding: '20px', backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px' },
+    outputHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
+    downloadButtons: { display: 'flex', gap: '10px' },
+    downloadButton: { padding: '8px 12px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer' },
     outputPre: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: '#f8f8f8', padding: '15px', borderRadius: '4px' },
 };
 

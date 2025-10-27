@@ -43,7 +43,7 @@ const CreativeStudio: React.FC = () => {
     
     return (
         <div style={styles.container}>
-            <h1 style={styles.header}>Estúdio Criativo: Orientação de RH</h1>
+            <h1 style={styles.header}>Orientador de RH</h1>
             <div style={styles.chatWindow}>
                 {messages.map((msg, index) => (
                     <div key={index} style={msg.role === 'user' ? styles.userMessage : styles.modelMessage}>
