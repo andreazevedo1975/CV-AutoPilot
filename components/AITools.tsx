@@ -1,13 +1,13 @@
 // FIX: Implement the AITools component to provide AI-powered assistance for job applications.
 import React, { useState } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { CV, GenerationHistoryItem, HistoryItem } from '../types';
-import { optimizeCV, generateCoverLetter, enhancePhoto } from '../services/geminiService';
+import { CV, GenerationHistoryItem, HistoryItem, CVLayout } from '../types';
+import { optimizeCV, generateCoverLetter, enhancePhoto, generateCVLayouts, applyCVLayout } from '../services/geminiService';
 
 declare const jspdf: any;
 declare const docx: any;
 
-type Tool = 'cv' | 'cover-letter' | 'photo';
+type Tool = 'cv' | 'cover-letter' | 'photo' | 'layouts';
 
 const AITools: React.FC = () => {
     const [activeTool, setActiveTool] = useState<Tool>('cv');
@@ -26,6 +26,15 @@ const AITools: React.FC = () => {
     const [enhancedImage, setEnhancedImage] = useState<string | null>(null);
     const [isEnhancing, setIsEnhancing] = useState(false);
     const [imageError, setImageError] = useState('');
+
+    // State for CV Layouts tool
+    const [layouts, setLayouts] = useState<CVLayout[]>([]);
+    const [isGeneratingLayouts, setIsGeneratingLayouts] = useState(false);
+    const [layoutError, setLayoutError] = useState<string | null>(null);
+    const [selectedLayout, setSelectedLayout] = useState<CVLayout | null>(null);
+    const [selectedCvIdForLayout, setSelectedCvIdForLayout] = useState<string>('');
+    const [isApplyingLayout, setIsApplyingLayout] = useState(false);
+    const [restructuredCv, setRestructuredCv] = useState<string>('');
 
 
     const handleSubmit = async () => {
@@ -71,21 +80,22 @@ const AITools: React.FC = () => {
         }
     };
     
-    const handleSaveAsPdf = () => {
+    const handleSaveAsPdf = (content: string, baseFileName: string) => {
+        if (!content) return;
         const { jsPDF } = jspdf;
         const doc = new jsPDF();
         
         const margin = 15;
         const pageWidth = doc.internal.pageSize.getWidth();
-        const textLines = doc.splitTextToSize(output, pageWidth - margin * 2);
+        const textLines = doc.splitTextToSize(content, pageWidth - margin * 2);
     
         doc.text(textLines, margin, margin);
-        const fileName = activeTool === 'cv' ? 'curriculo-otimizado.pdf' : 'carta-de-apresentacao.pdf';
-        doc.save(fileName);
+        doc.save(`${baseFileName}.pdf`);
     };
     
-    const handleSaveAsDocx = () => {
-        const paragraphs = output.split('\n').map(text => 
+    const handleSaveAsDocx = (content: string, baseFileName: string) => {
+        if (!content) return;
+        const paragraphs = content.split('\n').map(text => 
             new docx.Paragraph({
                 children: [new docx.TextRun(text)],
             })
@@ -102,8 +112,7 @@ const AITools: React.FC = () => {
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            const fileName = activeTool === 'cv' ? 'curriculo-otimizado.docx' : 'carta-de-apresentacao.docx';
-            a.download = fileName;
+            a.download = `${baseFileName}.docx`;
             document.body.appendChild(a);
             a.click();
             a.remove();
@@ -157,6 +166,53 @@ const AITools: React.FC = () => {
         document.body.removeChild(link);
     };
 
+    // Handlers for CV Layouts tool
+    const handleGenerateLayouts = async () => {
+        setIsGeneratingLayouts(true);
+        setLayoutError(null);
+        setLayouts([]);
+        setRestructuredCv('');
+        setSelectedLayout(null);
+        try {
+            const results = await generateCVLayouts();
+            setLayouts(results);
+        } catch (err) {
+            setLayoutError(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido.');
+        } finally {
+            setIsGeneratingLayouts(false);
+        }
+    };
+
+    const handleLayoutApplyClick = (layout: CVLayout) => {
+        setSelectedLayout(layout);
+        setRestructuredCv('');
+        setSelectedCvIdForLayout('');
+    };
+
+    const handleRestructureCv = async () => {
+        if (!selectedCvIdForLayout || !selectedLayout) {
+            setLayoutError("Selecione um currículo para aplicar o layout.");
+            return;
+        }
+        
+        const selectedCv = cvs.find(cv => cv.id === selectedCvIdForLayout);
+        if (!selectedCv) {
+            setLayoutError("Currículo não encontrado.");
+            return;
+        }
+
+        setIsApplyingLayout(true);
+        setLayoutError(null);
+        try {
+            const result = await applyCVLayout(selectedCv.content, selectedLayout);
+            setRestructuredCv(result);
+        } catch (err) {
+            setLayoutError(err instanceof Error ? err.message : 'Ocorreu um erro ao aplicar o layout.');
+        } finally {
+            setIsApplyingLayout(false);
+        }
+    };
+
     return (
         <div style={styles.container}>
             <h1 style={styles.header}>Ferramentas de IA</h1>
@@ -164,6 +220,7 @@ const AITools: React.FC = () => {
                 <button onClick={() => setActiveTool('cv')} style={activeTool === 'cv' ? styles.activeTab : styles.tab}>Otimizador de Currículo</button>
                 <button onClick={() => setActiveTool('cover-letter')} style={activeTool === 'cover-letter' ? styles.activeTab : styles.tab}>Gerador de Carta de Apresentação</button>
                 <button onClick={() => setActiveTool('photo')} style={activeTool === 'photo' ? styles.activeTab : styles.tab}>Melhoria de Foto</button>
+                <button onClick={() => setActiveTool('layouts')} style={activeTool === 'layouts' ? styles.activeTab : styles.tab}>Layout de Currículos</button>
             </div>
             
             <div style={styles.toolContainer}>
@@ -189,8 +246,8 @@ const AITools: React.FC = () => {
                                 <div style={styles.outputHeader}>
                                     <h2 style={styles.subHeader}>Resultado</h2>
                                     <div style={styles.downloadButtons}>
-                                        <button onClick={handleSaveAsPdf} style={styles.downloadButton}>Salvar como PDF</button>
-                                        <button onClick={handleSaveAsDocx} style={styles.downloadButton}>Salvar como DOCX</button>
+                                        <button onClick={() => handleSaveAsPdf(output, activeTool === 'cv' ? 'curriculo-otimizado' : 'carta-de-apresentacao')} style={styles.downloadButton}>Salvar como PDF</button>
+                                        <button onClick={() => handleSaveAsDocx(output, activeTool === 'cv' ? 'curriculo-otimizado' : 'carta-de-apresentacao')} style={styles.downloadButton}>Salvar como DOCX</button>
                                     </div>
                                 </div>
                                 <pre style={styles.outputPre}>{output}</pre>
@@ -201,7 +258,7 @@ const AITools: React.FC = () => {
                 {activeTool === 'photo' && (
                     <>
                         <h2 style={{...styles.subHeader, border: 'none', marginTop: 0}}>Melhoria de Foto Profissional</h2>
-                        <p style={{ color: '#555', marginBottom: '15px' }}>Carregue uma foto de perfil e a IA irá aprimorá-la para uso profissional, ajustando iluminação, contraste e substituindo o fundo.</p>
+                        <p style={styles.layoutDescription}>Carregue uma foto de perfil e a IA irá aprimorá-la para uso profissional, ajustando iluminação, contraste e substituindo o fundo.</p>
                         
                         <input type="file" accept="image/png, image/jpeg" onChange={handleImageUpload} style={styles.fileInput} id="photo-upload" />
                         <label htmlFor="photo-upload" style={styles.uploadButton}>
@@ -259,13 +316,76 @@ const AITools: React.FC = () => {
                         )}
                     </>
                 )}
+                 {activeTool === 'layouts' && (
+                    <div>
+                        <h2 style={{...styles.subHeader, border: 'none', marginTop: 0}}>Layout de Currículos</h2>
+                        <p style={styles.layoutDescription}>
+                            Gere sugestões de layouts modernos com a IA e aplique a estrutura a um de seus currículos salvos para criar uma versão otimizada e impactante.
+                        </p>
+
+                        <div style={styles.layoutActionsContainer}>
+                            <button style={styles.button} onClick={handleGenerateLayouts} disabled={isGeneratingLayouts}>
+                                {isGeneratingLayouts ? 'Gerando...' : 'Gerar Sugestões de Layouts'}
+                            </button>
+                        </div>
+
+                        {layoutError && <p style={styles.error}>{layoutError}</p>}
+                        
+                        {layouts.length > 0 && (
+                            <div style={styles.layoutsGrid}>
+                                {layouts.map((layout, index) => (
+                                    <div key={index} style={styles.layoutCard}>
+                                        <h3 style={styles.layoutCardHeader}>{layout.name}</h3>
+                                        <pre style={styles.layoutCardPreview}>{layout.previewContent}</pre>
+                                        <p style={styles.layoutCardDescription}>{layout.description}</p>
+                                        <ul style={styles.layoutCardFeatures}>
+                                            {layout.keyFeatures.map((feature, i) => <li key={i}>{feature}</li>)}
+                                        </ul>
+                                        <button style={styles.layoutApplyButton} onClick={() => handleLayoutApplyClick(layout)}>
+                                            Aplicar este Layout
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {selectedLayout && (
+                            <div style={styles.layoutApplySection}>
+                                <h2 style={styles.subHeader}>Testar Layout: "{selectedLayout.name}"</h2>
+                                <p>Selecione um de seus currículos salvos para reestruturar seu conteúdo com base neste layout.</p>
+                                <div style={styles.layoutApplyControls}>
+                                    <select value={selectedCvIdForLayout} onChange={e => setSelectedCvIdForLayout(e.target.value)} style={styles.layoutSelect}>
+                                        <option value="">Selecione um Currículo</option>
+                                        {cvs.map(cv => <option key={cv.id} value={cv.id}>{cv.name}</option>)}
+                                    </select>
+                                    <button onClick={handleRestructureCv} disabled={isApplyingLayout || !selectedCvIdForLayout} style={isApplyingLayout ? styles.buttonDisabled : styles.button}>
+                                        {isApplyingLayout ? 'Reestruturando...' : 'Reestruturar Agora'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {restructuredCv && (
+                            <div style={styles.outputContainer}>
+                                <div style={styles.outputHeader}>
+                                    <h2 style={styles.subHeader}>Resultado do Currículo Reestruturado</h2>
+                                    <div style={styles.downloadButtons}>
+                                        <button onClick={() => handleSaveAsPdf(restructuredCv, `${selectedLayout?.name.replace(/\s+/g, '_') || 'curriculo'}_reestruturado`)} style={styles.downloadButton}>Salvar como PDF</button>
+                                        <button onClick={() => handleSaveAsDocx(restructuredCv, `${selectedLayout?.name.replace(/\s+/g, '_') || 'curriculo'}_reestruturado`)} style={styles.downloadButton}>Salvar como DOCX</button>
+                                    </div>
+                                </div>
+                                <pre style={styles.outputPre}>{restructuredCv}</pre>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );
 };
 
 const styles: { [key: string]: React.CSSProperties } = {
-    container: { maxWidth: '800px' },
+    container: { maxWidth: '900px' },
     header: { color: '#1967d2' },
     subHeader: { color: '#1967d2' },
     tabs: { marginBottom: '20px', display: 'flex', flexWrap: 'wrap' },
@@ -281,14 +401,51 @@ const styles: { [key: string]: React.CSSProperties } = {
     outputHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
     downloadButtons: { display: 'flex', gap: '10px' },
     downloadButton: { padding: '8px 12px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
-    outputPre: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: '#f8f8f8', padding: '15px', borderRadius: '4px' },
+    outputPre: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: '#f8f8f8', padding: '15px', borderRadius: '4px', maxHeight: '400px', overflowY: 'auto' },
     fileInput: { display: 'none' },
     uploadButton: { display: 'inline-block', padding: '10px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer', textAlign: 'center', width: 'fit-content' },
     imagePreviewContainer: { display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px', marginTop: '20px', marginBottom: '20px', width: '100%' },
     imagePreview: { width: '250px', height: '250px', borderRadius: '8px', border: '1px solid #ccc', objectFit: 'cover' },
     imageLabel: { textAlign: 'center', color: '#333', marginBottom: '5px' },
     placeholderPreview: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f2f5', color: '#999', textAlign: 'center' },
-    loadingContainer: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f2f5', color: '#333', flexDirection: 'column' }
+    loadingContainer: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f2f5', color: '#333', flexDirection: 'column' },
+    // Styles for Layout Tool
+    layoutDescription: { color: '#555', marginBottom: '20px', lineHeight: 1.5 },
+    layoutActionsContainer: { marginBottom: '20px' },
+    layoutsGrid: {
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+        gap: '20px',
+        marginTop: '20px',
+    },
+    layoutCard: {
+        backgroundColor: '#fff',
+        border: '1px solid #e0e0e0',
+        borderRadius: '8px',
+        padding: '20px',
+        display: 'flex',
+        flexDirection: 'column',
+    },
+    layoutCardHeader: { color: '#1967d2', marginTop: 0, borderBottom: '1px solid #eee', paddingBottom: '10px' },
+    layoutCardPreview: {
+        backgroundColor: '#f8f9fa',
+        border: '1px solid #e9ecef',
+        borderRadius: '4px',
+        padding: '10px',
+        fontSize: '12px',
+        maxHeight: '150px',
+        overflowY: 'auto',
+        whiteSpace: 'pre-wrap',
+        fontFamily: 'monospace',
+        color: '#495057',
+        margin: '15px 0',
+    },
+    layoutCardDescription: { flexGrow: 1, color: '#444', fontSize: '15px' },
+    layoutCardFeatures: { paddingLeft: '20px', color: '#555', fontSize: '14px' },
+    layoutApplyButton: { padding: '10px 15px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '15px', alignSelf: 'flex-start' },
+    layoutApplySection: { marginTop: '30px', padding: '20px', backgroundColor: '#e8f0fe', borderRadius: '8px' },
+    layoutApplyControls: { display: 'flex', gap: '10px', marginTop: '15px', alignItems: 'center' },
+    layoutSelect: { flexGrow: 1, padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' },
 };
 
 export default AITools;
