@@ -83,12 +83,18 @@ const AITools: React.FC = () => {
     const handleSaveAsPdf = (content: string, baseFileName: string) => {
         if (!content) return;
         const { jsPDF } = jspdf;
-        const doc = new jsPDF();
+        const doc = new jsPDF({
+            unit: 'pt',
+            format: 'a4'
+        });
         
-        const margin = 15;
+        doc.setTextColor(40);
+        doc.setFontSize(11);
+
+        const margin = 40;
         const pageWidth = doc.internal.pageSize.getWidth();
         const textLines = doc.splitTextToSize(content, pageWidth - margin * 2);
-    
+
         doc.text(textLines, margin, margin);
         doc.save(`${baseFileName}.pdf`);
     };
@@ -389,28 +395,28 @@ const styles: { [key: string]: React.CSSProperties } = {
     header: { color: '#1967d2' },
     subHeader: { color: '#1967d2' },
     tabs: { marginBottom: '20px', display: 'flex', flexWrap: 'wrap' },
-    tab: { padding: '10px 20px', border: '1px solid #ccc', background: '#f0f0f0', cursor: 'pointer', fontSize: '16px', flex: '1 1 auto' },
+    tab: { padding: '10px 20px', border: '1px solid #4a5568', background: 'transparent', color: '#cbd5e0', cursor: 'pointer', fontSize: '16px', flex: '1 1 auto' },
     activeTab: { padding: '10px 20px', border: '1px solid #1967d2', background: '#1967d2', color: '#fff', cursor: 'pointer', fontSize: '16px', flex: '1 1 auto' },
     toolContainer: { display: 'flex', flexDirection: 'column', gap: '15px' },
-    select: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' },
-    textarea: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc', minHeight: '150px' },
+    select: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0' },
+    textarea: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0', minHeight: '150px' },
     button: { padding: '10px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer' },
-    buttonDisabled: { padding: '10px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#9e9e9e', border: 'none', borderRadius: '4px', cursor: 'not-allowed' },
-    error: { color: 'red' },
-    outputContainer: { marginTop: '20px', padding: '20px', backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px' },
+    buttonDisabled: { padding: '10px 20px', fontSize: '16px', color: '#a0aec0', backgroundColor: '#4a5568', border: 'none', borderRadius: '4px', cursor: 'not-allowed' },
+    error: { color: '#f56565' },
+    outputContainer: { marginTop: '20px', padding: '20px', backgroundColor: '#2d3748', border: '1px solid #4a5568', borderRadius: '8px' },
     outputHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
     downloadButtons: { display: 'flex', gap: '10px' },
     downloadButton: { padding: '8px 12px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
-    outputPre: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: '#f8f8f8', padding: '15px', borderRadius: '4px', maxHeight: '400px', overflowY: 'auto' },
+    outputPre: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: '#1a202c', color: '#e2e8f0', padding: '15px', borderRadius: '4px', maxHeight: '400px', overflowY: 'auto' },
     fileInput: { display: 'none' },
     uploadButton: { display: 'inline-block', padding: '10px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer', textAlign: 'center', width: 'fit-content' },
     imagePreviewContainer: { display: 'flex', justifyContent: 'center', alignItems: 'flex-start', flexWrap: 'wrap', gap: '20px', marginTop: '20px', marginBottom: '20px', width: '100%' },
-    imagePreview: { width: '250px', height: '250px', borderRadius: '8px', border: '1px solid #ccc', objectFit: 'cover' },
-    imageLabel: { textAlign: 'center', color: '#333', marginBottom: '5px' },
-    placeholderPreview: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f2f5', color: '#999', textAlign: 'center' },
-    loadingContainer: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f2f5', color: '#333', flexDirection: 'column' },
+    imagePreview: { width: '250px', height: '250px', borderRadius: '8px', border: '1px solid #4a5568', objectFit: 'cover' },
+    imageLabel: { textAlign: 'center', color: '#cbd5e0', marginBottom: '5px' },
+    placeholderPreview: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2d3748', color: '#a0aec0', textAlign: 'center' },
+    loadingContainer: { display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#2d3748', color: '#e2e8f0', flexDirection: 'column' },
     // Styles for Layout Tool
-    layoutDescription: { color: '#555', marginBottom: '20px', lineHeight: 1.5 },
+    layoutDescription: { color: '#a0aec0', marginBottom: '20px', lineHeight: 1.5 },
     layoutActionsContainer: { marginBottom: '20px' },
     layoutsGrid: {
         display: 'grid',
@@ -419,17 +425,17 @@ const styles: { [key: string]: React.CSSProperties } = {
         marginTop: '20px',
     },
     layoutCard: {
-        backgroundColor: '#fff',
-        border: '1px solid #e0e0e0',
+        backgroundColor: '#2d3748',
+        border: '1px solid #4a5568',
         borderRadius: '8px',
         padding: '20px',
         display: 'flex',
         flexDirection: 'column',
     },
-    layoutCardHeader: { color: '#1967d2', marginTop: 0, borderBottom: '1px solid #eee', paddingBottom: '10px' },
+    layoutCardHeader: { color: '#1967d2', marginTop: 0, borderBottom: '1px solid #4a5568', paddingBottom: '10px' },
     layoutCardPreview: {
-        backgroundColor: '#f8f9fa',
-        border: '1px solid #e9ecef',
+        backgroundColor: '#1a202c',
+        border: '1px solid #4a5568',
         borderRadius: '4px',
         padding: '10px',
         fontSize: '12px',
@@ -437,15 +443,15 @@ const styles: { [key: string]: React.CSSProperties } = {
         overflowY: 'auto',
         whiteSpace: 'pre-wrap',
         fontFamily: 'monospace',
-        color: '#495057',
+        color: '#cbd5e0',
         margin: '15px 0',
     },
-    layoutCardDescription: { flexGrow: 1, color: '#444', fontSize: '15px' },
-    layoutCardFeatures: { paddingLeft: '20px', color: '#555', fontSize: '14px' },
+    layoutCardDescription: { flexGrow: 1, color: '#e2e8f0', fontSize: '15px' },
+    layoutCardFeatures: { paddingLeft: '20px', color: '#a0aec0', fontSize: '14px' },
     layoutApplyButton: { padding: '10px 15px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '15px', alignSelf: 'flex-start' },
-    layoutApplySection: { marginTop: '30px', padding: '20px', backgroundColor: '#e8f0fe', borderRadius: '8px' },
+    layoutApplySection: { marginTop: '30px', padding: '20px', backgroundColor: '#2c5282', borderRadius: '8px' },
     layoutApplyControls: { display: 'flex', gap: '10px', marginTop: '15px', alignItems: 'center' },
-    layoutSelect: { flexGrow: 1, padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' },
+    layoutSelect: { flexGrow: 1, padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0' },
 };
 
 export default AITools;

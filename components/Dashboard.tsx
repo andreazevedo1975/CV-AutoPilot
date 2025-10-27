@@ -52,7 +52,7 @@ const Dashboard: React.FC = () => {
                              <li key={app.id} style={styles.listItem}>
                                 <div style={{ flex: 1 }}>
                                     <strong>{app.jobTitle}</strong> em {app.companyName}
-                                    <div style={{ fontSize: '14px', color: '#777', marginTop: '4px' }}>
+                                    <div style={{ fontSize: '14px', color: '#a0aec0', marginTop: '4px' }}>
                                         <span>Candidatou-se em: {app.dateApplied}</span>
                                         <span style={{ marginLeft: '12px' }}>Status: {app.status}</span>
                                     </div>
@@ -76,14 +76,14 @@ const Dashboard: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
     container: { maxWidth: '800px' },
     header: { color: '#1967d2' },
-    subHeader: { color: '#1967d2', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginTop: '30px' },
-    form: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '20px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e0e0e0', },
-    input: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' },
-    select: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' },
+    subHeader: { color: '#1967d2', borderBottom: '1px solid #4a5568', paddingBottom: '10px', marginTop: '30px' },
+    form: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '20px', backgroundColor: '#2d3748', borderRadius: '8px', border: '1px solid #4a5568', },
+    input: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0' },
+    select: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0' },
     button: { padding: '10px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer' },
     listContainer: { marginTop: '30px' },
     list: { listStyle: 'none', padding: 0 },
-    listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e0e0e0', marginBottom: '10px' },
+    listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#2d3748', borderRadius: '8px', border: '1px solid #4a5568', marginBottom: '10px' },
     linkButton: {
         padding: '8px 12px',
         backgroundColor: '#1967d2',

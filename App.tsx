@@ -47,16 +47,16 @@ const App: React.FC = () => {
     margin: 0,
     display: 'flex',
     minHeight: '100vh',
-    backgroundColor: '#f0f2f5',
-    color: '#333'
+    backgroundColor: '#1a202c',
+    color: '#e2e8f0'
   };
 
   const sidebarStyle: React.CSSProperties = {
     width: '280px',
-    backgroundColor: '#fff',
+    backgroundColor: '#2d3748',
     padding: '20px',
     boxSizing: 'border-box',
-    borderRight: '1px solid #e0e0e0',
+    borderRight: '1px solid #4a5568',
     display: 'flex',
     flexDirection: 'column',
     flexShrink: 0
@@ -79,7 +79,7 @@ const App: React.FC = () => {
     transition: 'background-color 0.2s, color 0.2s',
     fontSize: '16px',
     fontWeight: 500,
-    color: '#3c4043'
+    color: '#cbd5e0'
   };
   
   const activeNavItemStyle: React.CSSProperties = {
@@ -96,7 +96,7 @@ const App: React.FC = () => {
     color: '#1967d2',
     marginBottom: '30px',
     paddingBottom: '10px',
-    borderBottom: '2px solid #e0e0e0'
+    borderBottom: '2px solid #4a5568'
   };
 
   return (

@@ -151,8 +151,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     exportButtonDisabled: {
         padding: '10px 20px', 
         fontSize: '16px', 
-        color: '#fff', 
-        backgroundColor: '#9e9e9e',
+        color: '#a0aec0', 
+        backgroundColor: '#4a5568',
         border: 'none', 
         borderRadius: '4px', 
         cursor: 'not-allowed',
@@ -161,8 +161,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     list: { listStyle: 'none', padding: 0 },
     listItem: { 
-        backgroundColor: '#fff', 
-        border: '1px solid #e0e0e0',
+        backgroundColor: '#2d3748', 
+        border: '1px solid #4a5568',
         borderRadius: '8px', 
         marginBottom: '15px',
         padding: '15px',
@@ -180,7 +180,7 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     itemTimestamp: {
         fontSize: '14px',
-        color: '#777',
+        color: '#a0aec0',
     },
     summary: {
         cursor: 'pointer',
@@ -189,22 +189,23 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     detailsContent: {
         marginTop: '15px',
-        borderTop: '1px solid #eee',
+        borderTop: '1px solid #4a5568',
         paddingTop: '15px',
     },
     preformatted: {
         whiteSpace: 'pre-wrap',
         wordWrap: 'break-word',
-        background: '#f8f8f8',
+        background: '#1a202c',
         padding: '15px',
         borderRadius: '4px',
         maxHeight: '200px',
         overflowY: 'auto',
+        color: '#e2e8f0'
     },
     leadSearchInfo: {
         display: 'flex',
         gap: '20px',
-        color: '#555',
+        color: '#a0aec0',
         marginBottom: '10px'
     },
     leadList: {
@@ -213,13 +214,13 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     leadListItem: {
         padding: '10px',
-        backgroundColor: '#f8f8f8',
+        backgroundColor: '#1a202c',
         borderRadius: '4px',
         marginBottom: '8px',
         borderLeft: '3px solid #1967d2'
     },
-    contactInfo: { margin: '5px 0', color: '#333', wordBreak: 'break-all' },
-    notes: { margin: '5px 0', color: '#666', fontSize: '14px' },
+    contactInfo: { margin: '5px 0', color: '#cbd5e0', wordBreak: 'break-all' },
+    notes: { margin: '5px 0', color: '#a0aec0', fontSize: '14px' },
 };
 
 export default HistoryView;

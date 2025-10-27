@@ -85,8 +85,8 @@ const styles: { [key: string]: React.CSSProperties } = {
         flex: 1,
         overflowY: 'auto',
         padding: '20px',
-        backgroundColor: '#fff',
-        border: '1px solid #e0e0e0',
+        backgroundColor: '#2d3748',
+        border: '1px solid #4a5568',
         borderRadius: '8px',
         marginBottom: '20px',
     },
@@ -105,17 +105,18 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'inline-block',
         padding: '10px 15px',
         borderRadius: '18px',
-        backgroundColor: '#e8f0fe',
-        color: '#333',
+        backgroundColor: '#4a5568',
+        color: '#e2e8f0',
         maxWidth: '80%',
     },
     sourcesContainer: {
         fontSize: '12px',
-        marginTop: '5px',
-        paddingLeft: '15px'
+        marginTop: '8px',
+        padding: '0 15px',
+        color: '#a0aec0'
     },
     inputArea: { display: 'flex', gap: '10px' },
-    input: { flex: 1, padding: '12px', fontSize: '16px', borderRadius: '8px', border: '1px solid #ccc' },
+    input: { flex: 1, padding: '12px', fontSize: '16px', borderRadius: '8px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0' },
     button: { padding: '12px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '8px', cursor: 'pointer' },
 };
 

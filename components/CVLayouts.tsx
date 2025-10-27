@@ -110,11 +110,15 @@ const CVLayouts: React.FC = () => {
                     {layouts.map((layout, index) => (
                         <div key={index} style={styles.layoutCard}>
                             <h3 style={styles.cardHeader}>{layout.name}</h3>
-                            <pre style={styles.cardPreview}>{layout.previewContent}</pre>
-                            <p style={styles.cardDescription}>{layout.description}</p>
-                            <ul style={styles.cardFeatures}>
-                                {layout.keyFeatures.map((feature, i) => <li key={i}>{feature}</li>)}
-                            </ul>
+                            <div style={styles.cardBody}>
+                                <div style={styles.cardInfo}>
+                                    <p style={styles.cardDescription}>{layout.description}</p>
+                                    <ul style={styles.cardFeatures}>
+                                        {layout.keyFeatures.map((feature, i) => <li key={i}>{feature}</li>)}
+                                    </ul>
+                                </div>
+                                <pre style={styles.cardPreview}>{layout.previewContent}</pre>
+                            </div>
                             <button style={styles.applyButton} onClick={() => handleApplyClick(layout)}>
                                 Aplicar este Layout
                             </button>
@@ -158,12 +162,12 @@ const CVLayouts: React.FC = () => {
 const styles: { [key: string]: React.CSSProperties } = {
     container: { maxWidth: '900px' },
     header: { color: '#1967d2' },
-    description: { color: '#555', marginBottom: '20px', lineHeight: 1.5 },
+    description: { color: '#a0aec0', marginBottom: '20px', lineHeight: 1.5 },
     subHeader: { color: '#1967d2', margin: 0 },
     actionsContainer: { marginBottom: '20px' },
     button: { padding: '12px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer' },
-    buttonDisabled: { padding: '12px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#9e9e9e', border: 'none', borderRadius: '4px', cursor: 'not-allowed' },
-    error: { color: 'red', textAlign: 'center', marginTop: '10px' },
+    buttonDisabled: { padding: '12px 20px', fontSize: '16px', color: '#a0aec0', backgroundColor: '#4a5568', border: 'none', borderRadius: '4px', cursor: 'not-allowed' },
+    error: { color: '#f56565', textAlign: 'center', marginTop: '10px' },
     layoutsGrid: {
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
@@ -171,38 +175,49 @@ const styles: { [key: string]: React.CSSProperties } = {
         marginTop: '20px',
     },
     layoutCard: {
-        backgroundColor: '#fff',
-        border: '1px solid #e0e0e0',
+        backgroundColor: '#2d3748',
+        border: '1px solid #4a5568',
         borderRadius: '8px',
         padding: '20px',
         display: 'flex',
         flexDirection: 'column',
     },
-    cardHeader: { color: '#1967d2', marginTop: 0, borderBottom: '1px solid #eee', paddingBottom: '10px' },
+    cardHeader: { color: '#1967d2', marginTop: 0, borderBottom: '1px solid #4a5568', paddingBottom: '10px', marginBottom: '15px' },
+    cardBody: {
+        display: 'flex',
+        gap: '20px',
+        flexGrow: 1,
+    },
+    cardInfo: {
+        flex: '1 1 60%',
+        display: 'flex',
+        flexDirection: 'column',
+    },
     cardPreview: {
-        backgroundColor: '#f8f9fa',
-        border: '1px solid #e9ecef',
+        backgroundColor: '#1a202c',
+        border: '1px solid #4a5568',
         borderRadius: '4px',
         padding: '10px',
         fontSize: '12px',
-        maxHeight: '150px',
+        maxHeight: '250px',
         overflowY: 'auto',
         whiteSpace: 'pre-wrap',
         fontFamily: 'monospace',
-        color: '#495057',
-        margin: '15px 0',
+        color: '#cbd5e0',
+        margin: 0,
+        flex: '1 1 40%',
     },
-    cardDescription: { flexGrow: 1, color: '#444', fontSize: '15px' },
-    cardFeatures: { paddingLeft: '20px', color: '#555', fontSize: '14px' },
+    cardDescription: { flexGrow: 1, color: '#e2e8f0', fontSize: '15px' },
+    cardFeatures: { paddingLeft: '20px', color: '#a0aec0', fontSize: '14px', marginTop: '15px' },
     applyButton: { padding: '10px 15px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '15px', alignSelf: 'flex-start' },
-    applySection: { marginTop: '30px', padding: '20px', backgroundColor: '#e8f0fe', borderRadius: '8px' },
+    applySection: { marginTop: '30px', padding: '20px', backgroundColor: '#2c5282', borderRadius: '8px' },
     applyControls: { display: 'flex', gap: '10px', marginTop: '15px', alignItems: 'center' },
-    select: { flexGrow: 1, padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' },
-    outputContainer: { marginTop: '30px', padding: '20px', backgroundColor: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px' },
+    select: { flexGrow: 1, padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#1a202c', color: '#e2e8f0' },
+    outputContainer: { marginTop: '30px', padding: '20px', backgroundColor: '#2d3748', border: '1px solid #4a5568', borderRadius: '8px' },
     outputHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
     downloadButtons: { display: 'flex', gap: '10px' },
     downloadButton: { padding: '8px 12px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center' },
-    outputPre: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: '#f8f8f8', padding: '15px', borderRadius: '4px', maxHeight: '400px', overflowY: 'auto' },
+    outputPre: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: '#1a202c', color: '#e2e8f0', padding: '15px', borderRadius: '4px', maxHeight: '400px', overflowY: 'auto' },
 };
 
 export default CVLayouts;
