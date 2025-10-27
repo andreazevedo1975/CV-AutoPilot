@@ -17,7 +17,7 @@ export interface Application {
 }
 
 export interface CV {
-  id: string;
+  id:string;
   name: string;
   content: string;
 }
@@ -31,6 +31,17 @@ export interface GenerationHistoryItem {
   timestamp: string;
 }
 
+export interface LeadHistoryItem {
+  id: string;
+  type: 'Busca de Leads';
+  searchTerm: string;
+  location: string;
+  leads: Lead[];
+  timestamp: string;
+}
+
+export type HistoryItem = GenerationHistoryItem | LeadHistoryItem;
+
 export interface ChatMessage {
   role: 'user' | 'model';
   text: string;
@@ -41,4 +52,11 @@ export interface Lead {
   companyName: string;
   contactInfo: string;
   notes: string;
+}
+
+export interface CVLayout {
+    name: string;
+    description: string;
+    keyFeatures: string[];
+    previewContent: string;
 }

@@ -17,6 +17,7 @@ const CVManager: React.FC = () => {
     const [analysisResults, setAnalysisResults] = useState<{ [cvId: string]: string }>({});
     const [error, setError] = useState<string | null>(null);
     const [uploadMessage, setUploadMessage] = useState<string>('Clique para carregar (.pdf, .docx) ou cole o texto abaixo');
+    const [isAdding, setIsAdding] = useState(false);
 
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,7 +54,7 @@ const CVManager: React.FC = () => {
                 } catch (error) {
                     console.error('Erro ao ler o arquivo PDF', error);
                     setCvContent('');
-                    setUploadMessage('Erro ao ler o arquivo .pdf. Por favor, tente novamente ou cole o texto manualmente.');
+                    setUploadMessage('Erro ao ler o arquivo .pdf. Por favor, tente novamente ou cole o texto manually.');
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -79,19 +80,6 @@ const CVManager: React.FC = () => {
         event.target.value = '';
     };
 
-    const handleAddCv = () => {
-        if (!cvName || !cvContent) return;
-        const newCv: CV = {
-            id: new Date().toISOString(),
-            name: cvName,
-            content: cvContent,
-        };
-        setCvs([...cvs, newCv]);
-        setCvName('');
-        setCvContent('');
-        setUploadMessage('Clique para carregar (.pdf, .docx) ou cole o texto abaixo');
-    };
-
     const handleAnalyzeCv = async (cv: CV) => {
         setAnalyzingId(cv.id);
         setError(null);
@@ -104,6 +92,24 @@ const CVManager: React.FC = () => {
         } finally {
             setAnalyzingId(null);
         }
+    };
+    
+    const handleAddCv = async () => {
+        if (!cvName || !cvContent) return;
+        setIsAdding(true);
+        const newCv: CV = {
+            id: new Date().toISOString(),
+            name: cvName,
+            content: cvContent,
+        };
+        setCvs(prevCvs => [...prevCvs, newCv]);
+        
+        await handleAnalyzeCv(newCv);
+
+        setCvName('');
+        setCvContent('');
+        setUploadMessage('Clique para carregar (.pdf, .docx) ou cole o texto abaixo');
+        setIsAdding(false);
     };
     
     return (
@@ -124,7 +130,9 @@ const CVManager: React.FC = () => {
                 </label>
                 <input style={styles.input} type="text" placeholder="Nome do Currículo (ex: 'Currículo de Engenheiro de Software')" value={cvName} onChange={(e) => setCvName(e.target.value)} />
                 <textarea style={styles.textarea} placeholder="O conteúdo do seu currículo aparecerá aqui após o upload, ou você pode colá-lo diretamente..." value={cvContent} onChange={(e) => setCvContent(e.target.value)} rows={15}></textarea>
-                <button style={styles.button} onClick={handleAddCv}>Salvar Currículo</button>
+                <button style={isAdding ? styles.buttonDisabled : styles.button} onClick={handleAddCv} disabled={isAdding}>
+                    {isAdding ? 'Salvando e Analisando...' : 'Salvar e Analisar Currículo'}
+                </button>
             </div>
 
             <div style={styles.listContainer}>
@@ -135,13 +143,13 @@ const CVManager: React.FC = () => {
                         {cvs.map(cv => (
                             <li key={cv.id} style={styles.listItem}>
                                 <div style={styles.listItemHeader}>
-                                    <strong>{cv.name}</strong>
+                                    <strong style={styles.cvName}>{cv.name}</strong>
                                     <button 
                                         style={analyzingId === cv.id ? styles.analyzeButtonDisabled : styles.analyzeButton} 
                                         onClick={() => handleAnalyzeCv(cv)} 
                                         disabled={analyzingId === cv.id}
                                     >
-                                        {analyzingId === cv.id ? 'Analisando...' : 'Analisar com IA'}
+                                        {analyzingId === cv.id ? 'Analisando...' : 'Analisar Novamente'}
                                     </button>
                                 </div>
                                 {analysisResults[cv.id] && (
@@ -170,8 +178,8 @@ const CVManager: React.FC = () => {
 
 const styles: { [key: string]: React.CSSProperties } = {
     container: { maxWidth: '800px' },
-    header: { color: '#333' },
-    subHeader: { color: '#555', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginTop: '30px' },
+    header: { color: '#1967d2' },
+    subHeader: { color: '#1967d2', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginTop: '30px' },
     form: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '20px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e0e0e0', },
     uploadBox: {
         border: '2px dashed #ccc',
@@ -190,9 +198,18 @@ const styles: { [key: string]: React.CSSProperties } = {
     fileInput: {
         display: 'none',
     },
-    input: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' },
-    textarea: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc', minHeight: '200px' },
+    input: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#2d3748', color: '#ffffff' },
+    textarea: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#2d3748', color: '#ffffff', minHeight: '200px' },
     button: { padding: '10px 20px', fontSize: '16px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer' },
+    buttonDisabled: {
+        padding: '10px 20px',
+        fontSize: '16px',
+        color: '#fff',
+        backgroundColor: '#9e9e9e',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'not-allowed',
+    },
     listContainer: { marginTop: '30px' },
     list: { listStyle: 'none', padding: 0 },
     listItem: { 
@@ -207,6 +224,11 @@ const styles: { [key: string]: React.CSSProperties } = {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+    },
+    cvName: {
+        fontWeight: 'bold',
+        color: '#1967d2',
+        fontSize: '1.1em'
     },
     analyzeButton: {
         padding: '8px 12px',

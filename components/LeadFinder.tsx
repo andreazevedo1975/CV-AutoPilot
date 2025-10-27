@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Lead } from '../types';
+import { useLocalStorage } from '../hooks/useLocalStorage';
+import { Lead, HistoryItem, LeadHistoryItem } from '../types';
 import { findLeads } from '../services/geminiService';
 
 type JobType = 'Todos' | 'Presencial' | 'Home Office' | 'Híbrido';
@@ -13,6 +14,8 @@ const LeadFinder: React.FC = () => {
     const [leads, setLeads] = useState<Lead[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [, setHistory] = useLocalStorage<HistoryItem[]>('generationHistory', []);
+    const [isSaved, setIsSaved] = useState(false);
 
     const handleSearch = async () => {
         if (!jobTitle) {
@@ -22,6 +25,7 @@ const LeadFinder: React.FC = () => {
         setIsLoading(true);
         setError(null);
         setLeads([]);
+        setIsSaved(false); // Reset saved state on new search
 
         try {
             const results = await findLeads(jobTitle, location, jobType, searchSource);
@@ -53,6 +57,23 @@ const LeadFinder: React.FC = () => {
         link.click();
         document.body.removeChild(link);
     };
+
+    const handleSaveToHistory = () => {
+        if (leads.length === 0 || isSaved) return;
+
+        const historyItem: LeadHistoryItem = {
+            id: new Date().toISOString(),
+            type: 'Busca de Leads',
+            searchTerm: jobTitle,
+            location: location,
+            leads: leads,
+            timestamp: new Date().toISOString(),
+        };
+
+        setHistory(prevHistory => [historyItem, ...prevHistory]);
+        setIsSaved(true);
+    };
+
 
     const handleEmail = (lead: Lead) => {
         if (!lead.contactInfo.includes('@')) return; // Not an email
@@ -138,9 +159,14 @@ Atenciosamente,
                 <div style={styles.resultsContainer}>
                     <div style={styles.resultsHeader}>
                         <h2 style={styles.subHeader}>Resultados Encontrados</h2>
-                        <button style={styles.downloadButton} onClick={handleDownloadCsv}>
-                            Baixar Lista (CSV)
-                        </button>
+                        <div style={styles.resultActions}>
+                             <button style={isSaved ? styles.saveButtonSaved : styles.saveButton} onClick={handleSaveToHistory} disabled={isSaved}>
+                                {isSaved ? 'Salvo no Histórico' : 'Salvar no Histórico'}
+                            </button>
+                            <button style={styles.downloadButton} onClick={handleDownloadCsv}>
+                                Baixar Lista (CSV)
+                            </button>
+                        </div>
                     </div>
                     <ul style={styles.list}>
                         {leads.map((lead, index) => (
@@ -166,12 +192,12 @@ Atenciosamente,
 
 const styles: { [key: string]: React.CSSProperties } = {
     container: { maxWidth: '800px' },
-    header: { color: '#333' },
+    header: { color: '#1967d2' },
     description: { color: '#555', marginBottom: '20px', lineHeight: 1.5 },
-    subHeader: { color: '#555', margin: 0 },
+    subHeader: { color: '#1967d2', margin: 0 },
     form: { display: 'flex', flexDirection: 'column', gap: '15px', padding: '20px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e0e0e0', },
     inputGroup: { display: 'flex', flexDirection: 'column', gap: '10px' },
-    input: { padding: '12px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' },
+    input: { padding: '12px', fontSize: '16px', borderRadius: '4px', border: '1px solid #4a5568', backgroundColor: '#2d3748', color: '#ffffff' },
     filterContainer: { display: 'flex', justifyContent: 'space-between', gap: '20px', flexWrap: 'wrap' },
     filterGroup: { display: 'flex', flexDirection: 'column', gap: '8px' },
     filterLabel: { fontWeight: 'bold', color: '#555', marginBottom: '5px' },
@@ -180,13 +206,32 @@ const styles: { [key: string]: React.CSSProperties } = {
     error: { color: 'red', textAlign: 'center', marginTop: '10px' },
     resultsContainer: { marginTop: '30px' },
     resultsHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' },
+    resultActions: { display: 'flex', gap: '10px' },
     downloadButton: { padding: '10px 15px', fontSize: '14px', color: '#fff', backgroundColor: '#34a853', border: 'none', borderRadius: '4px', cursor: 'pointer' },
+    saveButton: {
+        padding: '10px 15px',
+        fontSize: '14px',
+        color: '#fff',
+        backgroundColor: '#1967d2',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer'
+    },
+    saveButtonSaved: {
+        padding: '10px 15px',
+        fontSize: '14px',
+        color: '#fff',
+        backgroundColor: '#9e9e9e',
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'not-allowed'
+    },
     list: { listStyle: 'none', padding: 0 },
     listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e0e0e0', marginBottom: '10px', flexWrap: 'wrap', gap: '10px' },
     leadInfo: { flex: '1 1 300px' },
     contactInfo: { margin: '5px 0', color: '#333', wordBreak: 'break-all' },
     notes: { margin: '5px 0', color: '#666', fontSize: '14px' },
-    emailButton: { padding: '8px 12px', fontSize: '14px', color: '#1967d2', backgroundColor: '#e8f0fe', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' },
+    emailButton: { padding: '8px 12px', fontSize: '14px', color: '#fff', backgroundColor: '#1967d2', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' },
 };
 
 export default LeadFinder;

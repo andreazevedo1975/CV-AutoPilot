@@ -1,6 +1,6 @@
 // FIX: Implement the Gemini service functions to interact with the Google Generative AI API for various AI-powered features.
-import { GoogleGenAI, Content, Type } from "@google/genai";
-import { ChatMessage, Lead } from "../types";
+import { GoogleGenAI, Content, Type, Modality } from "@google/genai";
+import { ChatMessage, Lead, CVLayout } from "../types";
 
 // FIX: Initialize the GoogleGenAI client with the API key from environment variables.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -203,5 +203,128 @@ Responda estritamente com um objeto JSON que corresponda ao schema fornecido. N�
     } catch (error) {
         console.error("Erro ao buscar leads:", error);
         throw new Error("Falha ao buscar leads. A IA pode não ter conseguido encontrar contatos para esta pesquisa.");
+    }
+}
+
+export async function enhancePhoto(base64ImageData: string, mimeType: string): Promise<string> {
+    const prompt = "Melhore esta foto para um perfil profissional. Ajuste a iluminação, o contraste e a nitidez para torná-la mais adequada para um currículo ou LinkedIn. Remova o fundo e substitua por um fundo neutro e profissional, como um cinza claro ou um azul gradiente suave.";
+
+    const data = base64ImageData.split(',')[1];
+    if (!data) {
+        throw new Error("Formato de imagem inválido.");
+    }
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash-image',
+            contents: {
+                parts: [
+                    {
+                        inlineData: {
+                            data: data,
+                            mimeType: mimeType,
+                        },
+                    },
+                    {
+                        text: prompt,
+                    },
+                ],
+            },
+            config: {
+                responseModalities: [Modality.IMAGE],
+            },
+        });
+
+        const imagePart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
+
+        if (imagePart && imagePart.inlineData) {
+            return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
+        } else {
+             throw new Error("A IA não retornou uma imagem válida no formato esperado.");
+        }
+
+    } catch (error) {
+        console.error("Erro ao melhorar a foto:", error);
+        throw new Error("Falha ao melhorar a foto. Verifique o console para mais detalhes.");
+    }
+}
+
+export async function generateCVLayouts(): Promise<CVLayout[]> {
+    const prompt = `Gere 4 exemplos de layouts de currículo modernos e eficazes. Cada layout deve ser adequado para diferentes tipos de profissionais.
+
+Para cada layout, forneça:
+1.  **name**: Um nome curto e descritivo (ex: "Minimalista Moderno", "Criativo com Portfólio").
+2.  **description**: Uma breve descrição do layout, explicando sua finalidade e para quem é mais adequado.
+3.  **keyFeatures**: Uma lista (array) de 3 a 4 características principais do layout (ex: "Foco em habilidades", "Design limpo de uma coluna", "Seção de perfil impactante").
+4.  **previewContent**: Um pequeno trecho de texto de exemplo (usando um personagem fictício como "João da Silva") que demonstre visualmente a estrutura e o estilo do layout. Use quebras de linha para formatar. Deve ser curto, como um mini-currículo.
+
+Responda estritamente com um objeto JSON que corresponda ao schema fornecido. Não inclua texto fora do JSON.`;
+
+    const layoutSchema = {
+        type: Type.ARRAY,
+        items: {
+            type: Type.OBJECT,
+            properties: {
+                name: { type: Type.STRING },
+                description: { type: Type.STRING },
+                keyFeatures: {
+                    type: Type.ARRAY,
+                    items: { type: Type.STRING },
+                },
+                previewContent: { 
+                    type: Type.STRING,
+                    description: "Um pequeno exemplo de texto formatado que demonstra o layout."
+                },
+            },
+            required: ['name', 'description', 'keyFeatures', 'previewContent'],
+        },
+    };
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: prompt,
+            config: {
+                responseMimeType: "application/json",
+                responseSchema: layoutSchema,
+            }
+        });
+        const jsonText = response.text.trim();
+        return JSON.parse(jsonText);
+    } catch (error) {
+        console.error("Erro ao gerar layouts de currículo:", error);
+        throw new Error("Falha ao gerar sugestões de layout.");
+    }
+}
+
+export async function applyCVLayout(cvContent: string, layout: CVLayout): Promise<string> {
+    const prompt = `Você é um especialista em design de currículos. Sua tarefa é reestruturar o texto de um currículo existente para se adequar a um novo layout. **NÃO** invente informações novas. Use apenas o conteúdo do currículo fornecido.
+
+**Layout Selecionado:** ${layout.name}
+**Descrição do Layout:** ${layout.description}
+**Características Principais:** ${layout.keyFeatures.join(', ')}
+
+**Instruções:**
+1.  Leia o currículo original.
+2.  Reorganize as seções e o conteúdo para corresponder às características do layout selecionado. Por exemplo, se o layout prioriza "Habilidades", coloque essa seção em destaque no topo. Se for "Minimalista", torne as frases mais concisas e focadas em resultados.
+3.  Mantenha a formatação de texto simples (sem Markdown complexo), mas use quebras de linha para criar seções claras.
+4.  Retorne **APENAS** o texto do currículo reestruturado, sem nenhum comentário ou introdução.
+
+---
+**Currículo Original para Reestruturar:**
+---
+${cvContent}
+---
+`;
+
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-pro',
+            contents: prompt,
+        });
+        return response.text;
+    } catch (error) {
+        console.error("Erro ao aplicar layout ao currículo:", error);
+        throw new Error("Falha ao aplicar o novo layout ao currículo.");
     }
 }

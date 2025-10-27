@@ -75,8 +75,8 @@ const Dashboard: React.FC = () => {
 
 const styles: { [key: string]: React.CSSProperties } = {
     container: { maxWidth: '800px' },
-    header: { color: '#333' },
-    subHeader: { color: '#555', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginTop: '30px' },
+    header: { color: '#1967d2' },
+    subHeader: { color: '#1967d2', borderBottom: '1px solid #ddd', paddingBottom: '10px', marginTop: '30px' },
     form: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '20px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e0e0e0', },
     input: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' },
     select: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: '1px solid #ccc' },
@@ -86,8 +86,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e0e0e0', marginBottom: '10px' },
     linkButton: {
         padding: '8px 12px',
-        backgroundColor: '#e8f0fe',
-        color: '#1967d2',
+        backgroundColor: '#1967d2',
+        color: '#fff',
         textDecoration: 'none',
         borderRadius: '4px',
         fontWeight: 500,

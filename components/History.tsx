@@ -1,17 +1,32 @@
 // FIX: Implement the History component to display AI generation history, resolving a name collision with the browser's built-in 'History' object by naming the component 'HistoryView'.
 import React from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { GenerationHistoryItem } from '../types';
+import { HistoryItem } from '../types';
 import { Download } from './icons';
 
 const HistoryView: React.FC = () => {
-    const [history] = useLocalStorage<GenerationHistoryItem[]>('generationHistory', []);
+    const [history] = useLocalStorage<HistoryItem[]>('generationHistory', []);
 
     const handleExport = () => {
         if (history.length === 0) return;
     
         const formattedHistory = history.map(item => {
-            return `
+            if ('leads' in item) {
+                const leadsText = item.leads.map(lead => `  - ${lead.companyName}: ${lead.contactInfo} (${lead.notes})`).join('\n');
+                return `
+==================================================
+Tipo: ${item.type}
+Data: ${new Date(item.timestamp).toLocaleString()}
+Termo de Busca: ${item.searchTerm}
+Localização: ${item.location || 'N/A'}
+==================================================
+
+[Leads Encontrados]
+-------------------
+${leadsText}
+`;
+            } else { // GenerationHistoryItem
+                 return `
 ==================================================
 Tipo: ${item.type}
 Data: ${new Date(item.timestamp).toLocaleString()}
@@ -29,6 +44,7 @@ ${item.inputJobDescription}
 ------------------
 ${item.output}
 `;
+            }
         }).join('\n\n');
     
         const blob = new Blob([formattedHistory], { type: 'text/plain;charset=utf-8' });
@@ -59,25 +75,58 @@ ${item.output}
                 <p>Nenhum histórico ainda. Use as Ferramentas de IA para gerar conteúdo.</p>
             ) : (
                 <ul style={styles.list}>
-                    {history.map((item) => (
-                        <li key={item.id} style={styles.listItem}>
-                            <div style={styles.itemHeader}>
-                                <strong style={styles.itemType}>{item.type}</strong>
-                                <span style={styles.itemTimestamp}>{new Date(item.timestamp).toLocaleString()}</span>
-                            </div>
-                            <details>
-                                <summary style={styles.summary}>Ver Detalhes</summary>
-                                <div style={styles.detailsContent}>
-                                    <h4>Currículo de Entrada:</h4>
-                                    <pre style={styles.preformatted}>{item.inputCv}</pre>
-                                    <h4>Descrição da Vaga de Entrada:</h4>
-                                    <pre style={styles.preformatted}>{item.inputJobDescription}</pre>
-                                    <h4>Resultado:</h4>
-                                    <pre style={styles.preformatted}>{item.output}</pre>
-                                </div>
-                            </details>
-                        </li>
-                    ))}
+                    {history.map((item) => {
+                        if ('leads' in item) { // Type guard for LeadHistoryItem
+                            return (
+                                <li key={item.id} style={styles.listItem}>
+                                    <div style={styles.itemHeader}>
+                                        <strong style={styles.itemType}>{item.type}</strong>
+                                        <span style={styles.itemTimestamp}>{new Date(item.timestamp).toLocaleString()}</span>
+                                    </div>
+                                    <div style={styles.leadSearchInfo}>
+                                        <span><strong>Termo:</strong> {item.searchTerm}</span>
+                                        {item.location && <span><strong>Localização:</strong> {item.location}</span>}
+                                    </div>
+                                    <details>
+                                        <summary style={styles.summary}>Ver {item.leads.length} Leads</summary>
+                                        <div style={styles.detailsContent}>
+                                            <ul style={styles.leadList}>
+                                                {item.leads.map((lead, index) => (
+                                                    <li key={index} style={styles.leadListItem}>
+                                                        <strong>{lead.companyName}</strong>
+                                                        <p style={styles.contactInfo}>
+                                                            <a href={lead.contactInfo.startsWith('http') ? lead.contactInfo : `mailto:${lead.contactInfo}`} target="_blank" rel="noopener noreferrer">{lead.contactInfo}</a>
+                                                        </p>
+                                                        <p style={styles.notes}><em>{lead.notes}</em></p>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    </details>
+                                </li>
+                            );
+                        } else { // GenerationHistoryItem
+                            return (
+                                <li key={item.id} style={styles.listItem}>
+                                    <div style={styles.itemHeader}>
+                                        <strong style={styles.itemType}>{item.type}</strong>
+                                        <span style={styles.itemTimestamp}>{new Date(item.timestamp).toLocaleString()}</span>
+                                    </div>
+                                    <details>
+                                        <summary style={styles.summary}>Ver Detalhes</summary>
+                                        <div style={styles.detailsContent}>
+                                            <h4>Currículo de Entrada:</h4>
+                                            <pre style={styles.preformatted}>{item.inputCv}</pre>
+                                            <h4>Descrição da Vaga de Entrada:</h4>
+                                            <pre style={styles.preformatted}>{item.inputJobDescription}</pre>
+                                            <h4>Resultado:</h4>
+                                            <pre style={styles.preformatted}>{item.output}</pre>
+                                        </div>
+                                    </details>
+                                </li>
+                            );
+                        }
+                    })}
                 </ul>
             )}
         </div>
@@ -87,7 +136,7 @@ ${item.output}
 const styles: { [key: string]: React.CSSProperties } = {
     container: { maxWidth: '800px' },
     pageHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' },
-    header: { color: '#333' },
+    header: { color: '#1967d2' },
     exportButton: { 
         padding: '10px 20px', 
         fontSize: '16px', 
@@ -126,7 +175,8 @@ const styles: { [key: string]: React.CSSProperties } = {
     },
     itemType: {
         fontSize: '18px',
-        color: '#333',
+        color: '#1967d2',
+        fontWeight: 'bold',
     },
     itemTimestamp: {
         fontSize: '14px',
@@ -151,6 +201,25 @@ const styles: { [key: string]: React.CSSProperties } = {
         maxHeight: '200px',
         overflowY: 'auto',
     },
+    leadSearchInfo: {
+        display: 'flex',
+        gap: '20px',
+        color: '#555',
+        marginBottom: '10px'
+    },
+    leadList: {
+        listStyle: 'none',
+        padding: 0
+    },
+    leadListItem: {
+        padding: '10px',
+        backgroundColor: '#f8f8f8',
+        borderRadius: '4px',
+        marginBottom: '8px',
+        borderLeft: '3px solid #1967d2'
+    },
+    contactInfo: { margin: '5px 0', color: '#333', wordBreak: 'break-all' },
+    notes: { margin: '5px 0', color: '#666', fontSize: '14px' },
 };
 
 export default HistoryView;

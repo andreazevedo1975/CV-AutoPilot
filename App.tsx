@@ -6,9 +6,10 @@ import CVManager from './components/CVManager';
 import HistoryView from './components/History';
 import CreativeStudio from './components/CreativeStudio';
 import LeadFinder from './components/LeadFinder';
-import { Briefcase, Wand, FileText, Clock, Sparkles, AutopilotIcon, Target } from './components/icons';
+import CVLayouts from './components/CVLayouts';
+import { Briefcase, Wand, FileText, Clock, Sparkles, AutopilotIcon, Target, Layout } from './components/icons';
 
-type View = 'dashboard' | 'cv-manager' | 'ai-tools' | 'history' | 'creative-studio' | 'lead-finder';
+type View = 'dashboard' | 'cv-manager' | 'ai-tools' | 'history' | 'creative-studio' | 'lead-finder' | 'cv-layouts';
 
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('cv-manager');
@@ -27,6 +28,8 @@ const App: React.FC = () => {
         return <CreativeStudio />;
       case 'lead-finder':
         return <LeadFinder />;
+      case 'cv-layouts':
+        return <CVLayouts />;
       default:
         return <CVManager />;
     }
@@ -35,6 +38,7 @@ const App: React.FC = () => {
   const navItems = [
     { id: 'cv-manager', label: 'Gerenciador de Currículos', icon: <FileText /> },
     { id: 'ai-tools', label: 'Ferramentas de IA', icon: <Wand /> },
+    { id: 'cv-layouts', label: 'Layout de Currículos', icon: <Layout /> },
     { id: 'lead-finder', label: 'Buscador de Leads', icon: <Target /> },
     { id: 'dashboard', label: 'Painel de Candidaturas', icon: <Briefcase /> },
     { id: 'history', label: 'Histórico de Gerações', icon: <Clock /> },
@@ -84,8 +88,8 @@ const App: React.FC = () => {
   
   const activeNavItemStyle: React.CSSProperties = {
     ...navItemStyle,
-    backgroundColor: '#e8f0fe',
-    color: '#1967d2',
+    backgroundColor: '#1967d2',
+    color: '#fff',
   };
 
   const headerStyle: React.CSSProperties = {

@@ -61,6 +61,14 @@ export const Target = () => (
     </svg>
 );
 
+export const Layout = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={iconStyle}>
+      <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="3" y1="9" x2="21" y2="9"></line>
+      <line x1="9" y1="21" x2="9" y2="9"></line>
+    </svg>
+);
+
 export const Download = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={{...iconStyle, marginRight: '8px' }}>
       <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>

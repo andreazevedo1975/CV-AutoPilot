@@ -46,8 +46,8 @@ const CreativeStudio: React.FC = () => {
             <h1 style={styles.header}>Orientador de RH</h1>
             <div style={styles.chatWindow}>
                 {messages.map((msg, index) => (
-                    <div key={index} style={msg.role === 'user' ? styles.userMessage : styles.modelMessage}>
-                        <p style={styles.messageText}>{msg.text}</p>
+                    <div key={index} style={msg.role === 'user' ? styles.userMessageContainer : styles.modelMessageContainer}>
+                        <p style={msg.role === 'user' ? styles.userMessageText : styles.modelMessageText}>{msg.text}</p>
                         {msg.sources && msg.sources.length > 0 && (
                             <div style={styles.sourcesContainer}>
                                 <strong>Fontes:</strong>
@@ -80,7 +80,7 @@ const CreativeStudio: React.FC = () => {
 
 const styles: { [key: string]: React.CSSProperties } = {
     container: { display: 'flex', flexDirection: 'column', height: 'calc(100vh - 60px)' },
-    header: { color: '#333', marginBottom: '20px' },
+    header: { color: '#1967d2', marginBottom: '20px' },
     chatWindow: {
         flex: 1,
         overflowY: 'auto',
@@ -90,9 +90,18 @@ const styles: { [key: string]: React.CSSProperties } = {
         borderRadius: '8px',
         marginBottom: '20px',
     },
-    userMessage: { textAlign: 'right', marginBottom: '10px' },
-    modelMessage: { textAlign: 'left', marginBottom: '10px' },
-    messageText: {
+    userMessageContainer: { textAlign: 'right', marginBottom: '10px' },
+    modelMessageContainer: { textAlign: 'left', marginBottom: '10px' },
+    userMessageText: {
+        display: 'inline-block',
+        padding: '10px 15px',
+        borderRadius: '18px',
+        backgroundColor: '#1967d2',
+        color: '#fff',
+        maxWidth: '80%',
+        textAlign: 'left',
+    },
+    modelMessageText: {
         display: 'inline-block',
         padding: '10px 15px',
         borderRadius: '18px',
