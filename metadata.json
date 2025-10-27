@@ -1,0 +1,7 @@
+{
+  "name": "CV-AutoPilot",
+  "description": "Um assistente inteligente para otimizar seu currículo, gerar cartas de apresentação e acompanhar suas candidaturas de emprego, maximizando suas chances de conseguir uma entrevista.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
