@@ -14,6 +14,8 @@ export interface Application {
   dateApplied: string;
   jobUrl?: string;
   status: ApplicationStatus;
+  phone?: string;
+  email?: string;
 }
 
 export interface CV {

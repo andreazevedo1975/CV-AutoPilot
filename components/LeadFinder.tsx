@@ -3,9 +3,17 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Lead, HistoryItem, LeadHistoryItem } from '../types';
 import { findLeads } from '../services/geminiService';
 import { ThemeContext } from '../App';
+import { Copy } from './icons';
 
 type JobType = 'Todos' | 'Presencial' | 'Home Office' | 'Híbrido';
 type SearchSource = 'empresas' | 'sociais';
+
+const isValidEmail = (email: string): boolean => {
+    if (!email) return false;
+    // Simple regex for email validation. It checks for a basic user@domain.tld structure.
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(String(email).toLowerCase());
+};
 
 const LeadFinder: React.FC = () => {
     const { colors } = useContext(ThemeContext);
@@ -20,6 +28,8 @@ const LeadFinder: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [, setHistory] = useLocalStorage<HistoryItem[]>('generationHistory', []);
     const [isSaved, setIsSaved] = useState(false);
+    const [copiedContact, setCopiedContact] = useState<string | null>(null);
+
 
     const handleSearch = async () => {
         if (!jobTitle) {
@@ -80,7 +90,7 @@ const LeadFinder: React.FC = () => {
 
 
     const handleEmail = (lead: Lead) => {
-        if (!lead.contactInfo.includes('@')) return; // Not an email
+        if (!isValidEmail(lead.contactInfo)) return; // Not a valid email
 
         const subject = encodeURIComponent(`Candidatura para ${jobTitle} - [Seu Nome]`);
         const body = encodeURIComponent(`Prezados recrutadores da ${lead.companyName},
@@ -98,6 +108,19 @@ Atenciosamente,
 [Seu Nome]
 `);
         window.location.href = `mailto:${lead.contactInfo}?subject=${subject}&body=${body}`;
+    };
+
+    const handleCopy = (text: string) => {
+        if (!navigator.clipboard) {
+            console.error('A API da área de transferência não está disponível.');
+            return;
+        }
+        navigator.clipboard.writeText(text).then(() => {
+            setCopiedContact(text);
+            setTimeout(() => setCopiedContact(null), 2500);
+        }).catch(err => {
+            console.error('Não foi possível copiar o texto: ', err);
+        });
     };
 
     const jobTitlePlaceholder = searchSource === 'empresas' 
@@ -178,13 +201,30 @@ Atenciosamente,
                                 <div style={styles.leadInfo}>
                                     <strong>{lead.companyName}</strong>
                                     <p style={styles.contactInfo}>
-                                        <a href={lead.contactInfo.startsWith('http') ? lead.contactInfo : `mailto:${lead.contactInfo}`} target="_blank" rel="noopener noreferrer" style={{color: colors.primary}}>{lead.contactInfo}</a>
+                                        <a
+                                            href={lead.contactInfo.startsWith('http') ? lead.contactInfo : (isValidEmail(lead.contactInfo) ? `mailto:${lead.contactInfo}` : '#')}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style={{color: colors.primary, cursor: (lead.contactInfo.startsWith('http') || isValidEmail(lead.contactInfo)) ? 'pointer' : 'default'}}
+                                            onClick={(e) => !(lead.contactInfo.startsWith('http') || isValidEmail(lead.contactInfo)) && e.preventDefault()}
+                                        >
+                                            {lead.contactInfo}
+                                        </a>
                                     </p>
                                     <p style={styles.notes}><em>{lead.notes}</em></p>
                                 </div>
-                                {lead.contactInfo.includes('@') && (
-                                    <button style={styles.emailButton} onClick={() => handleEmail(lead)}>Enviar E-mail</button>
-                                )}
+                                <div style={styles.leadActions}>
+                                    <button
+                                        style={copiedContact === lead.contactInfo ? styles.copyButtonSuccess : styles.copyButton}
+                                        onClick={() => handleCopy(lead.contactInfo)}
+                                    >
+                                        <Copy />
+                                        {copiedContact === lead.contactInfo ? 'Copiado!' : 'Copiar'}
+                                    </button>
+                                    {isValidEmail(lead.contactInfo) && (
+                                        <button style={styles.emailButton} onClick={() => handleEmail(lead)}>Enviar E-mail</button>
+                                    )}
+                                </div>
                             </li>
                         ))}
                     </ul>
@@ -238,6 +278,33 @@ const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
     leadInfo: { flex: '1 1 300px' },
     contactInfo: { margin: '5px 0', color: colors.textPrimary, wordBreak: 'break-all' },
     notes: { margin: '5px 0', color: colors.textSecondary, fontSize: '14px' },
+    leadActions: { display: 'flex', gap: '10px', alignItems: 'center' },
+    copyButton: { 
+        padding: '8px 12px', 
+        fontSize: '14px', 
+        color: colors.primary, 
+        backgroundColor: 'transparent', 
+        border: `1px solid ${colors.primary}`, 
+        borderRadius: '4px', 
+        cursor: 'pointer', 
+        fontWeight: '500', 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '5px' 
+    },
+    copyButtonSuccess: { 
+        padding: '8px 12px', 
+        fontSize: '14px', 
+        color: colors.textOnPrimary, 
+        backgroundColor: colors.success, 
+        border: `1px solid ${colors.success}`, 
+        borderRadius: '4px', 
+        cursor: 'pointer', 
+        fontWeight: '500', 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '5px' 
+    },
     emailButton: { padding: '8px 12px', fontSize: '14px', color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: '500' },
     footer: {
         marginTop: '40px',
