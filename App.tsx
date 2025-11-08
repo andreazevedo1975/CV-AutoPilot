@@ -1,4 +1,4 @@
-// FIX: Replaced HTML content with a valid React component to serve as the application's main entry point. This resolves TypeScript parsing errors and the missing default export issue.
+// FIX: Replaced HTML content with a valid React component to serve as the application's main entry point.
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import Dashboard from './components/Dashboard';
 import AITools from './components/AITools';
@@ -8,7 +8,7 @@ import CreativeStudio from './components/CreativeStudio';
 import LeadFinder from './components/LeadFinder';
 import { Briefcase, Wand, FileText, Clock, Sparkles, AutopilotIcon, Target, SunIcon, MoonIcon } from './components/icons';
 import { useLocalStorage } from './hooks/useLocalStorage';
-import { Theme } from './types';
+import { Application, Theme } from './types';
 
 type View = 'dashboard' | 'cv-manager' | 'ai-tools' | 'history' | 'creative-studio' | 'lead-finder';
 
@@ -26,6 +26,7 @@ const themes = {
     inputText: '#2d3748',
     buttonDisabledBg: '#cbd5e0',
     buttonDisabledText: '#718096',
+    notification: '#ef4444',
   },
   dark: {
     background: '#1a202c',
@@ -40,6 +41,7 @@ const themes = {
     inputText: '#ffffff',
     buttonDisabledBg: '#4a5568',
     buttonDisabledText: '#a0aec0',
+    notification: '#ef4444',
   }
 };
 
@@ -48,6 +50,7 @@ export const ThemeContext = createContext(null);
 const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>('cv-manager');
   const [theme, setTheme] = useLocalStorage<Theme>('theme', 'dark');
+  const [applications, setApplications] = useLocalStorage<Application[]>('applications', []);
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   const currentThemeColors = themes[theme];
@@ -57,10 +60,13 @@ const App: React.FC = () => {
     document.body.style.color = currentThemeColors.textPrimary;
   }, [theme, currentThemeColors]);
 
+  const today = new Date().toISOString().split('T')[0];
+  const notificationCount = applications.filter(app => app.reminderDate && app.reminderDate <= today).length;
+
   const renderView = () => {
     switch (currentView) {
       case 'dashboard':
-        return <Dashboard />;
+        return <Dashboard applications={applications} setApplications={setApplications} />;
       case 'cv-manager':
         return <CVManager />;
       case 'ai-tools':
@@ -77,12 +83,12 @@ const App: React.FC = () => {
   };
 
   const navItems = [
-    { id: 'cv-manager', label: 'Gerenciador de Currículos', icon: <FileText /> },
-    { id: 'ai-tools', label: 'Ferramentas de IA', icon: <Wand /> },
-    { id: 'lead-finder', label: 'Buscador de Leads', icon: <Target /> },
-    { id: 'dashboard', label: 'Painel de Candidaturas', icon: <Briefcase /> },
-    { id: 'history', label: 'Histórico de Gerações', icon: <Clock /> },
-    { id: 'creative-studio', label: 'Orientador de RH', icon: <Sparkles /> },
+    { id: 'cv-manager', label: 'Gerenciador de Currículos', icon: <FileText />, count: 0 },
+    { id: 'ai-tools', label: 'Ferramentas de IA', icon: <Wand />, count: 0 },
+    { id: 'lead-finder', label: 'Buscador de Leads', icon: <Target />, count: 0 },
+    { id: 'dashboard', label: 'Painel de Candidaturas', icon: <Briefcase />, count: notificationCount },
+    { id: 'history', label: 'Histórico de Gerações', icon: <Clock />, count: 0 },
+    { id: 'creative-studio', label: 'Orientador de RH', icon: <Sparkles />, count: 0 },
   ];
   
   const getStyles = (colors) => ({
@@ -120,11 +126,27 @@ const App: React.FC = () => {
       transition: 'background-color 0.2s, color 0.2s',
       fontSize: '16px',
       fontWeight: 500,
-      color: colors.textSecondary
+      color: colors.textSecondary,
+      position: 'relative'
     },
     activeNavItem: {
       backgroundColor: colors.primary,
       color: colors.textOnPrimary,
+    },
+    notificationBadge: {
+        position: 'absolute',
+        top: '8px',
+        right: '15px',
+        backgroundColor: colors.notification,
+        color: 'white',
+        borderRadius: '50%',
+        width: '20px',
+        height: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '12px',
+        fontWeight: 'bold',
     },
     header: {
       display: 'flex',
@@ -172,6 +194,7 @@ const App: React.FC = () => {
               >
                 {item.icon}
                 {item.label}
+                {item.count > 0 && <span style={styles.notificationBadge}>{item.count}</span>}
               </div>
             ))}
           </div>

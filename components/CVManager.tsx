@@ -5,6 +5,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { CV } from '../types';
 import { analyzeCV } from '../services/geminiService';
 import { ThemeContext } from '../App';
+import { Trash } from './icons';
 
 // Declarations for libraries loaded via CDN
 declare const mammoth: any;
@@ -17,6 +18,7 @@ const CVManager: React.FC = () => {
     const [cvs, setCvs] = useLocalStorage<CV[]>('cvs', []);
     const [cvName, setCvName] = useState('');
     const [cvContent, setCvContent] = useState('');
+    const [yearsOfExperience, setYearsOfExperience] = useState<number | ''>('');
     const [analyzingId, setAnalyzingId] = useState<string | null>(null);
     const [analysisResults, setAnalysisResults] = useState<{ [cvId: string]: string }>({});
     const [error, setError] = useState<string | null>(null);
@@ -105,6 +107,7 @@ const CVManager: React.FC = () => {
             id: new Date().toISOString(),
             name: cvName,
             content: cvContent,
+            yearsOfExperience: yearsOfExperience ? Number(yearsOfExperience) : undefined,
         };
         setCvs(prevCvs => [...prevCvs, newCv]);
         
@@ -112,8 +115,20 @@ const CVManager: React.FC = () => {
 
         setCvName('');
         setCvContent('');
+        setYearsOfExperience('');
         setUploadMessage('Clique para carregar (.pdf, .docx) ou cole o texto abaixo');
         setIsAdding(false);
+    };
+
+    const handleDeleteCv = (cvId: string) => {
+        if (window.confirm('Tem certeza de que deseja excluir este currículo? Esta ação não pode ser desfeita.')) {
+            setCvs(prevCvs => prevCvs.filter(cv => cv.id !== cvId));
+            setAnalysisResults(prev => {
+                const newResults = { ...prev };
+                delete newResults[cvId];
+                return newResults;
+            });
+        }
     };
     
     return (
@@ -133,6 +148,7 @@ const CVManager: React.FC = () => {
                     />
                 </label>
                 <input style={styles.input} type="text" placeholder="Nome do Currículo (ex: 'Currículo de Engenheiro de Software')" value={cvName} onChange={(e) => setCvName(e.target.value)} />
+                <input style={styles.input} type="number" placeholder="Anos de Experiência (Opcional)" value={yearsOfExperience} onChange={(e) => setYearsOfExperience(e.target.value === '' ? '' : parseInt(e.target.value, 10))} />
                 <textarea style={styles.textarea} placeholder="O conteúdo do seu currículo aparecerá aqui após o upload, ou você pode colá-lo diretamente..." value={cvContent} onChange={(e) => setCvContent(e.target.value)} rows={15}></textarea>
                 <button style={isAdding ? styles.buttonDisabled : styles.button} onClick={handleAddCv} disabled={isAdding}>
                     {isAdding ? 'Salvando e Analisando...' : 'Salvar e Analisar Currículo'}
@@ -147,14 +163,30 @@ const CVManager: React.FC = () => {
                         {cvs.map(cv => (
                             <li key={cv.id} style={styles.listItem}>
                                 <div style={styles.listItemHeader}>
-                                    <strong style={styles.cvName}>{cv.name}</strong>
-                                    <button 
-                                        style={analyzingId === cv.id ? styles.analyzeButtonDisabled : styles.analyzeButton} 
-                                        onClick={() => handleAnalyzeCv(cv)} 
-                                        disabled={analyzingId === cv.id}
-                                    >
-                                        {analyzingId === cv.id ? 'Analisando...' : 'Analisar Novamente'}
-                                    </button>
+                                    <div style={{ flex: '1 1 auto', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                                        <strong style={styles.cvName}>{cv.name}</strong>
+                                        {cv.yearsOfExperience !== undefined && cv.yearsOfExperience !== null && (
+                                            <span style={styles.experienceTag}>
+                                                {cv.yearsOfExperience} ano{cv.yearsOfExperience !== 1 ? 's' : ''} de experiência
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div style={styles.actionsContainer}>
+                                        <button 
+                                            style={analyzingId === cv.id ? styles.analyzeButtonDisabled : styles.analyzeButton} 
+                                            onClick={() => handleAnalyzeCv(cv)} 
+                                            disabled={analyzingId === cv.id}
+                                        >
+                                            {analyzingId === cv.id ? 'Analisando...' : 'Analisar Novamente'}
+                                        </button>
+                                        <button 
+                                            style={styles.deleteButton}
+                                            onClick={() => handleDeleteCv(cv.id)}
+                                            title="Excluir currículo"
+                                        >
+                                            <Trash />
+                                        </button>
+                                    </div>
                                 </div>
                                 {analysisResults[cv.id] && (
                                     <div style={styles.analysisResult}>
@@ -231,11 +263,27 @@ const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '10px',
+    },
+    actionsContainer: {
+        display: 'flex',
+        gap: '10px',
+        alignItems: 'center',
     },
     cvName: {
         fontWeight: 'bold',
         color: colors.primary,
         fontSize: '1.1em'
+    },
+    experienceTag: {
+        backgroundColor: colors.primary,
+        color: colors.textOnPrimary,
+        padding: '3px 10px',
+        borderRadius: '12px',
+        fontSize: '12px',
+        fontWeight: '500',
+        whiteSpace: 'nowrap',
     },
     analyzeButton: {
         padding: '8px 12px',
@@ -247,6 +295,7 @@ const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
         borderRadius: '4px',
         cursor: 'pointer',
         transition: 'background-color 0.2s',
+        flexShrink: 0,
     },
     analyzeButtonDisabled: {
         padding: '8px 12px',
@@ -257,6 +306,19 @@ const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
         border: 'none',
         borderRadius: '4px',
         cursor: 'not-allowed',
+        flexShrink: 0,
+    },
+    deleteButton: {
+        padding: '8px',
+        backgroundColor: colors.notification,
+        color: colors.textOnPrimary,
+        border: 'none',
+        borderRadius: '4px',
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        lineHeight: 0,
     },
     analysisResult: {
         marginTop: '15px',

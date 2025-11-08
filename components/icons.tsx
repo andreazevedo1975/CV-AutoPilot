@@ -106,6 +106,13 @@ export const AutopilotIcon = () => (
     </svg>
 );
 
+export const Bell = ({ style } : { style?: React.CSSProperties }) => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={{...iconStyle, ...style}}>
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+    </svg>
+);
+
 export const AdvisorIcon = ({ style }: { style?: React.CSSProperties }) => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" style={style}>
     <defs>
@@ -216,5 +223,18 @@ export const SunIcon = () => (
 export const MoonIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={themeIconStyle}>
         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+);
+
+export const Pencil = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={{...iconStyle, margin: 0, width: '16px', height: '16px' }}>
+        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+    </svg>
+);
+
+export const Trash = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" style={{...iconStyle, margin: 0, width: '16px', height: '16px' }}>
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
     </svg>
 );

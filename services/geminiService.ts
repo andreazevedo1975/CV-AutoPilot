@@ -1,330 +1,280 @@
-// FIX: Implement the Gemini service functions to interact with the Google Generative AI API for various AI-powered features.
-import { GoogleGenAI, Content, Type, Modality } from "@google/genai";
-import { ChatMessage, Lead, CVLayout } from "../types";
+import { GoogleGenAI, Type, GenerateContentResponse } from "@google/genai";
+import { ChatMessage, Lead, CVLayout } from '../types';
 
-// FIX: Initialize the GoogleGenAI client with the API key from environment variables.
+// Initialize the Google Gemini AI client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
-export async function optimizeCV(cv: string, jobDescription: string): Promise<string> {
-    const prompt = `Com base na descrição da vaga a seguir, otimize o currículo fornecido. Retorne apenas o conteúdo do currículo otimizado, sem nenhum comentário extra antes ou depois.
-    
-    Descrição da Vaga:
-    ---
-    ${jobDescription}
-    ---
-    
-    Currículo:
-    ---
-    ${cv}
-    ---
+/**
+ * Analyzes a CV and provides feedback.
+ * @param cvContent The content of the CV.
+ * @returns A string containing the analysis in Markdown format.
+ */
+export const analyzeCV = async (cvContent: string): Promise<string> => {
+  try {
+    const prompt = `
+      Analise o seguinte currículo em português e forneça uma análise detalhada dos pontos fortes e fracos.
+      Dê sugestões específicas de melhoria em formato de lista (bullet points).
+      Formate toda a resposta em Markdown, usando títulos para seções como "Pontos Fortes", "Pontos a Melhorar" e "Sugestões".
+      
+      Currículo:
+      ---
+      ${cvContent}
+      ---
+    `;
+
+    // FIX: Use ai.models.generateContent according to guidelines.
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+    });
+
+    // FIX: Extract text directly from the response object.
+    return response.text;
+  } catch (error) {
+    console.error("Error analyzing CV:", error);
+    throw new Error("Não foi possível analisar o currículo. Verifique sua chave de API e tente novamente.");
+  }
+};
+
+/**
+ * Generates content (optimized CV or cover letter) based on a CV and job description.
+ * @param cvContent The user's CV.
+ * @param jobDescription The job description.
+ * @param type The type of content to generate.
+ * @returns The generated text.
+ */
+export const generateContentForJob = async (
+  cvContent: string,
+  jobDescription: string,
+  type: 'cv' | 'cover-letter'
+): Promise<string> => {
+  let prompt = '';
+
+  if (type === 'cv') {
+    prompt = `
+      Otimize o seguinte currículo para a vaga descrita abaixo.
+      O currículo otimizado deve destacar as experiências e habilidades mais relevantes para a vaga, reorganizando e reescrevendo seções conforme necessário.
+      O objetivo é criar a melhor versão possível do currículo para esta vaga específica.
+      Retorne APENAS o texto do currículo otimizado, sem comentários adicionais ou formatação Markdown.
+
+      [Currículo Original]
+      ---
+      ${cvContent}
+      ---
+
+      [Descrição da Vaga]
+      ---
+      ${jobDescription}
+      ---
+    `;
+  } else { // cover-letter
+    prompt = `
+      Escreva uma carta de apresentação profissional e concisa com base no currículo e na descrição da vaga abaixo.
+      A carta deve ser direcionada à equipe de recrutamento da empresa, destacando como as habilidades e experiências do candidato atendem perfeitamente aos requisitos da vaga.
+      O tom deve ser formal, mas entusiástico e confiante.
+      Retorne APENAS o texto da carta de apresentação, sem comentários adicionais.
+
+      [Currículo]
+      ---
+      ${cvContent}
+      ---
+
+      [Descrição da Vaga]
+      ---
+      ${jobDescription}
+      ---
+    `;
+  }
+
+  try {
+    const response = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: prompt,
+    });
+    return response.text;
+  } catch (error) {
+    console.error(`Error generating ${type}:`, error);
+    throw new Error("Não foi possível gerar o conteúdo. Tente novamente mais tarde.");
+  }
+};
+
+/**
+ * Handles a chat conversation with the AI career advisor.
+ * @param messages The history of chat messages.
+ * @returns The model's response text and any grounding sources.
+ */
+export const chat = async (messages: ChatMessage[]): Promise<{ text: string; sources?: { uri: string; title: string }[] }> => {
+  const history = messages.slice(0, -1).map(msg => ({
+    role: msg.role,
+    parts: [{ text: msg.text }],
+  }));
+
+  const latestMessage = messages[messages.length - 1].text;
+
+  try {
+    const response: GenerateContentResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: [...history, { role: 'user', parts: [{text: latestMessage}] }],
+        config: {
+            systemInstruction: `
+                Você é Sofia Ribeiro, uma orientadora de carreira e especialista em RH. Sua missão é ajudar os usuários a se prepararem para entrevistas de emprego, otimizar seus currículos e fornecer conselhos de carreira.
+                Use um tom amigável, profissional e encorajador. Forneça respostas práticas e acionáveis.
+                Quando relevante e para informações atuais ou que necessitem de fontes externas, use a busca para fundamentar suas respostas.
+            `,
+            tools: [{ googleSearch: {} }],
+        },
+    });
+
+    const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks;
+    const sources = groundingChunks
+        ?.filter(chunk => chunk.web)
+        .map(chunk => ({
+            uri: chunk.web.uri,
+            title: chunk.web.title,
+        })) || [];
+        
+    return { text: response.text, sources: sources.length > 0 ? sources : undefined };
+  } catch (error) {
+    console.error("Error in chat:", error);
+    throw new Error("Erro na comunicação com o assistente. Tente novamente.");
+  }
+};
+
+/**
+ * Finds job leads based on user criteria.
+ * @param jobTitle The desired job title.
+ * @param location The desired location.
+ * @param jobType The type of job (remote, hybrid, etc.).
+ * @param searchSource Where to search (companies, social media).
+ * @param skills Relevant skills for the job.
+ * @returns A promise that resolves to an array of Lead objects.
+ */
+export const findLeads = async (
+    jobTitle: string,
+    location: string,
+    jobType: string,
+    searchSource: string,
+    skills: string
+): Promise<Lead[]> => {
+    const prompt = `
+        Encontre leads de prospecção ativa para um candidato ao cargo de "${jobTitle}" com as seguintes habilidades: "${skills}".
+        A busca deve focar em ${searchSource === 'empresas' ? 'sites de carreira de empresas e contatos de RH' : 'posts em redes sociais e hashtags relevantes'}.
+        Se uma localização for fornecida ("${location}"), priorize-a. Para o tipo de vaga "${jobType}", encontre contatos relevantes.
+        O contato (contactInfo) deve ser um e-mail de RH, uma página de 'Trabalhe Conosco', ou um link para um post de vaga em uma rede social.
+        Em 'notes', adicione um breve resumo (1-2 frases) sobre por que o lead é relevante, mencionando a fonte se possível.
+        Retorne uma lista de no máximo 10 leads.
     `;
 
     try {
-        // FIX: Use ai.models.generateContent for generating text.
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
+            model: "gemini-2.5-flash",
             contents: prompt,
-        });
-        // FIX: Extract text from response using the .text property.
-        return response.text;
-    } catch (error) {
-        console.error("Erro ao otimizar o currículo:", error);
-        throw new Error("Falha ao otimizar o currículo.");
-    }
-}
-
-export async function generateCoverLetter(cv: string, jobDescription: string): Promise<string> {
-    const prompt = `Com base no currículo e na descrição da vaga fornecidos, escreva uma carta de apresentação convincente e profissional.
-    
-    Descrição da Vaga:
-    ---
-    ${jobDescription}
-    ---
-    
-    Currículo:
-    ---
-    ${cv}
-    ---
-    `;
-    try {
-        // FIX: Use ai.models.generateContent for generating text.
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash',
-            contents: prompt,
-        });
-        // FIX: Extract text from response using the .text property.
-        return response.text;
-    } catch (error) {
-        console.error("Erro ao gerar a carta de apresentação:", error);
-        throw new Error("Falha ao gerar a carta de apresentação.");
-    }
-}
-
-export async function chat(history: ChatMessage[]): Promise<{ text: string, sources: { uri: string; title: string }[] }> {
-    // FIX: Map chat history to the format expected by the Gemini API.
-    const contents: Content[] = history.map(msg => ({
-        role: msg.role,
-        parts: [{ text: msg.text }]
-    }));
-    
-    try {
-        // FIX: Use a more advanced model for chat and enable Google Search grounding.
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
-            contents: contents,
             config: {
-                systemInstruction: "Você é Sofia Ribeiro, uma especialista sênior de Recursos Humanos e orientadora de carreira. Seu objetivo é fornecer orientação profissional a candidatos a emprego, de forma encorajadora, profissional e perspicaz. Ofereça conselhos concretos sobre entrevistas, currículos e testes profissionais. Apresente-se como Sofia na primeira mensagem.",
-                tools: [{ googleSearch: {} }],
-            }
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: Type.ARRAY,
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            companyName: {
+                                type: Type.STRING,
+                                description: 'O nome da empresa ou do post na rede social.',
+                            },
+                            contactInfo: {
+                                type: Type.STRING,
+                                description: 'E-mail, URL da página de carreiras, ou link do post.',
+                            },
+                            notes: {
+                                type: Type.STRING,
+                                description: 'Breve resumo da relevância do lead.',
+                            },
+                        },
+                        required: ["companyName", "contactInfo", "notes"]
+                    },
+                },
+            },
         });
         
-        // FIX: Extract text from response using the .text property.
-        const text = response.text;
-        // FIX: Extract grounding metadata for search results.
-        const groundingChunks = response.candidates?.[0]?.groundingMetadata?.groundingChunks || [];
-        const sources = groundingChunks
-            .filter(chunk => chunk.web && chunk.web.uri && chunk.web.title)
-            .map(chunk => ({
-                uri: chunk.web.uri!,
-                title: chunk.web.title!,
-            }));
-
-        return { text, sources };
-
+        let jsonStr = response.text.trim();
+        const leads: Lead[] = JSON.parse(jsonStr);
+        return leads;
     } catch (error) {
-        console.error("Erro no chat:", error);
-        throw new Error("Falha ao obter a resposta do chat.");
+        console.error("Error finding leads:", error);
+        throw new Error("Não foi possível encontrar leads. A busca pode ter sido muito específica ou ocorreu um erro. Tente novamente com termos diferentes.");
     }
-}
+};
 
-export async function analyzeCV(cvContent: string): Promise<string> {
-    const prompt = `Como um especialista sênior de Recursos Humanos, analise o seguinte currículo. Forneça uma análise detalhada e construtiva em formato Markdown. A sua análise deve incluir os seguintes pontos:
+/**
+ * Generates CV layout suggestions.
+ * @returns A promise that resolves to an array of CVLayout objects.
+ */
+export const generateCVLayoutSuggestions = async (): Promise<Omit<CVLayout, 'id'>[]> => {
+    const prompt = `
+        Gere 5 sugestões distintas de layouts de currículo em português (por exemplo: moderno, cronológico, criativo, funcional, acadêmico).
+        Para cada sugestão, forneça:
+        - "name": O nome do layout (ex: "Executivo Moderno").
+        - "description": Uma breve descrição do layout e para quem ele é ideal.
+        - "keyFeatures": Uma lista (array de strings) com 3 a 4 pontos-chave do layout.
+        - "previewContent": Um exemplo de estrutura textual simples, como um esqueleto, para ilustrar a organização das seções.
 
-1.  **Pontos Fortes:** Identifique as seções e informações que estão bem apresentadas e são impactantes.
-2.  **Pontos de Melhoria:** Aponte áreas que precisam de correção ou podem ser melhoradas. Seja específico sobre o que mudar (ex: "Reformule a descrição da experiência X para focar em resultados quantificáveis").
-3.  **Formato e Estrutura:** Comente sobre a clareza, organização e legibilidade geral do currículo.
-4.  **Sugestões de Vagas:** Com base no perfil, habilidades e experiências listadas, sugira 3 a 5 tipos de cargos ou áreas de atuação para os quais este candidato seria um bom concorrente.
-
----
-**Currículo para Análise:**
----
-${cvContent}
----
-`;
-
+        Formate a saída como um array JSON válido.
+    `;
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro', // Using a more powerful model for detailed analysis
-            contents: prompt,
-        });
-        return response.text;
-    } catch (error) {
-        console.error("Erro ao analisar o currículo:", error);
-        throw new Error("Falha ao analisar o currículo.");
-    }
-}
-
-
-export async function findLeads(jobTitle: string, location: string, jobType: string, searchSource: string): Promise<Lead[]> {
-    let prompt = '';
-    const locationText = location || 'Brasil (geral)';
-
-    if (searchSource === 'empresas') {
-        prompt = `Você é um assistente de pesquisa especializado em recrutamento. Sua tarefa é encontrar contatos públicos de empresas para um candidato a emprego.
-
-**Restrições Críticas de Privacidade (LGPD):**
-- **NÃO** forneça e-mails pessoais de funcionários (ex: nome.sobrenome@empresa.com).
-- **FORNEÇA APENAS** informações de contato públicas destinadas a receber currículos, como e-mails genéricos de RH (ex: carreiras@empresa.com) ou links para a página "Trabalhe Conosco".
-- Se um e-mail direto não estiver publicamente disponível, forneça a URL da página de carreiras da empresa.
-
-**Tarefa:**
-Com base nos critérios abaixo, gere uma lista de até 15 empresas que possam ter vagas para este perfil.
-
-**Cargo Desejado:** ${jobTitle}
-**Localização:** ${locationText}
-**Tipo de Vaga:** ${jobType}
-
-**Formato de Saída:**
-Responda estritamente com um objeto JSON que corresponda ao schema fornecido. Não inclua texto fora do JSON.`;
-    } else { // searchSource === 'sociais'
-        prompt = `Você é um assistente de pesquisa especializado em encontrar oportunidades de emprego em redes sociais.
-
-**Tarefa:**
-Encontre até 15 posts públicos, perfis de recrutadores ou hashtags relevantes em redes sociais (como LinkedIn). O usuário forneceu um termo de busca que pode ser um cargo ou uma hashtag.
-
-- **Para posts:** O nome da empresa deve ser o nome do autor ou da empresa que postou. A informação de contato deve ser a URL direta para o post. A nota deve ser um trecho do post.
-- **Para hashtags:** Se o termo de busca for uma hashtag, encontre posts que a utilizam. Se for um cargo, sugira hashtags relevantes. O nome da empresa pode ser "Busca por Hashtag". A informação de contato deve ser uma URL de busca para a hashtag na rede social (ex: https://www.linkedin.com/feed/hashtag/?keywords=vagasti). A nota deve indicar qual hashtag foi sugerida ou encontrada.
-- Priorize resultados recentes e relevantes.
-
-**Critérios de Busca:**
-**Termo de Busca:** ${jobTitle}
-**Tipo de Vaga:** ${jobType}
-**Localização Sugerida:** ${locationText}
-
-**Formato de Saída:**
-Responda estritamente com um objeto JSON que corresponda ao schema fornecido. Não inclua texto fora do JSON.`;
-    }
-    
-    const leadSchema = {
-        type: Type.ARRAY,
-        items: {
-          type: Type.OBJECT,
-          properties: {
-            companyName: {
-              type: Type.STRING,
-              description: 'O nome da empresa, do recrutador, ou uma descrição da fonte (ex: "Post no LinkedIn").',
-            },
-            contactInfo: {
-              type: Type.STRING,
-              description: 'A URL do post/perfil, o e-mail público de RH, ou a URL da página "Trabalhe Conosco".',
-            },
-            notes: {
-                type: Type.STRING,
-                description: 'Uma breve observação, trecho do post, ou a hashtag sugerida.'
-            }
-          },
-          required: ['companyName', 'contactInfo', 'notes'],
-        },
-    };
-
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
+            model: "gemini-2.5-flash",
             contents: prompt,
             config: {
                 responseMimeType: "application/json",
-                responseSchema: leadSchema,
-            }
-        });
-
-        const jsonText = response.text.trim();
-        const leads = JSON.parse(jsonText);
-        return leads;
-    } catch (error) {
-        console.error("Erro ao buscar leads:", error);
-        throw new Error("Falha ao buscar leads. A IA pode não ter conseguido encontrar contatos para esta pesquisa.");
-    }
-}
-
-export async function enhancePhoto(base64ImageData: string, mimeType: string): Promise<string> {
-    const prompt = "Melhore esta foto para um perfil profissional. Ajuste a iluminação, o contraste e a nitidez para torná-la mais adequada para um currículo ou LinkedIn. Remova o fundo e substitua por um fundo neutro e profissional, como um cinza claro ou um azul gradiente suave.";
-
-    const data = base64ImageData.split(',')[1];
-    if (!data) {
-        throw new Error("Formato de imagem inválido.");
-    }
-
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-flash-image',
-            contents: {
-                parts: [
-                    {
-                        inlineData: {
-                            data: data,
-                            mimeType: mimeType,
-                        },
-                    },
-                    {
-                        text: prompt,
-                    },
-                ],
-            },
-            config: {
-                responseModalities: [Modality.IMAGE],
-            },
-        });
-
-        const imagePart = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData);
-
-        if (imagePart && imagePart.inlineData) {
-            return `data:${imagePart.inlineData.mimeType};base64,${imagePart.inlineData.data}`;
-        } else {
-             throw new Error("A IA não retornou uma imagem válida no formato esperado.");
-        }
-
-    } catch (error) {
-        console.error("Erro ao melhorar a foto:", error);
-        throw new Error("Falha ao melhorar a foto. Verifique o console para mais detalhes.");
-    }
-}
-
-export async function generateCVLayouts(): Promise<CVLayout[]> {
-    const prompt = `Gere 4 exemplos de layouts de currículo modernos e eficazes. Cada layout deve ser adequado para diferentes tipos de profissionais.
-
-Para cada layout, forneça:
-1.  **name**: Um nome curto e descritivo (ex: "Minimalista Moderno", "Criativo com Portfólio").
-2.  **description**: Uma breve descrição do layout, explicando sua finalidade e para quem é mais adequado.
-3.  **keyFeatures**: Uma lista (array) de 3 a 4 características principais do layout (ex: "Foco em habilidades", "Design limpo de uma coluna", "Seção de perfil impactante").
-4.  **previewContent**: Um pequeno trecho de texto de exemplo (usando um personagem fictício como "João da Silva") que demonstre visualmente a estrutura e o estilo do layout. Use quebras de linha para formatar. Deve ser curto, como um mini-currículo.
-
-Responda estritamente com um objeto JSON que corresponda ao schema fornecido. Não inclua texto fora do JSON.`;
-
-    const layoutSchema = {
-        type: Type.ARRAY,
-        items: {
-            type: Type.OBJECT,
-            properties: {
-                name: { type: Type.STRING },
-                description: { type: Type.STRING },
-                keyFeatures: {
+                responseSchema: {
                     type: Type.ARRAY,
-                    items: { type: Type.STRING },
-                },
-                previewContent: { 
-                    type: Type.STRING,
-                    description: "Um pequeno exemplo de texto formatado que demonstra o layout."
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            name: { type: Type.STRING },
+                            description: { type: Type.STRING },
+                            keyFeatures: { type: Type.ARRAY, items: { type: Type.STRING } },
+                            previewContent: { type: Type.STRING },
+                        },
+                        required: ["name", "description", "keyFeatures", "previewContent"]
+                    },
                 },
             },
-            required: ['name', 'description', 'keyFeatures', 'previewContent'],
-        },
-    };
+        });
+        const jsonStr = response.text.trim();
+        return JSON.parse(jsonStr);
+    } catch (error) {
+        console.error("Error generating CV layouts:", error);
+        throw new Error("Não foi possível gerar sugestões de layout. Tente novamente.");
+    }
+};
 
+/**
+ * Applies a selected layout to a given CV content.
+ * @param cvContent The original CV content.
+ * @param layout The layout to apply.
+ * @returns A promise that resolves to the restructured CV content as a string.
+ */
+export const applyCVLayout = async (cvContent: string, layout: CVLayout): Promise<string> => {
+    const prompt = `
+        Reestruture o seguinte currículo para seguir as diretrizes do layout "${layout.name}".
+        O layout é descrito como: "${layout.description}".
+        Características principais a serem consideradas: ${layout.keyFeatures.join(', ')}.
+        O resultado deve ser APENAS o texto do currículo reformatado.
+        IMPORTANTE: Envolva CADA título de seção com ##. Por exemplo: ## Experiência Profissional ## ou ## Formação Acadêmica ##. Não use formatação Markdown.
+
+        [Currículo Original]
+        ---
+        ${cvContent}
+        ---
+    `;
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
             contents: prompt,
-            config: {
-                responseMimeType: "application/json",
-                responseSchema: layoutSchema,
-            }
-        });
-        const jsonText = response.text.trim();
-        return JSON.parse(jsonText);
-    } catch (error) {
-        console.error("Erro ao gerar layouts de currículo:", error);
-        throw new Error("Falha ao gerar sugestões de layout.");
-    }
-}
-
-export async function applyCVLayout(cvContent: string, layout: CVLayout): Promise<string> {
-    const prompt = `Você é um especialista em design de currículos. Sua tarefa é reestruturar o texto de um currículo existente para se adequar a um novo layout. **NÃO** invente informações novas. Use apenas o conteúdo do currículo fornecido.
-
-**Layout Selecionado:** ${layout.name}
-**Descrição do Layout:** ${layout.description}
-**Características Principais:** ${layout.keyFeatures.join(', ')}
-
-**Instruções:**
-1.  Leia o currículo original.
-2.  Reorganize as seções e o conteúdo para corresponder às características do layout selecionado. Por exemplo, se o layout prioriza "Habilidades", coloque essa seção em destaque no topo. Se for "Minimalista", torne as frases mais concisas e focadas em resultados.
-3.  Mantenha a formatação de texto simples (sem Markdown complexo), mas use quebras de linha para criar seções claras.
-4.  Retorne **APENAS** o texto do currículo reestruturado, sem nenhum comentário ou introdução.
-
----
-**Currículo Original para Reestruturar:**
----
-${cvContent}
----
-`;
-
-    try {
-        const response = await ai.models.generateContent({
-            model: 'gemini-2.5-pro',
-            contents: prompt,
         });
         return response.text;
     } catch (error) {
-        console.error("Erro ao aplicar layout ao currículo:", error);
-        throw new Error("Falha ao aplicar o novo layout ao currículo.");
+        console.error("Error applying CV layout:", error);
+        throw new Error("Não foi possível aplicar o layout ao currículo. Tente novamente.");
     }
-}
+};

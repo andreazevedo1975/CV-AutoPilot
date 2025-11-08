@@ -16,12 +16,15 @@ export interface Application {
   status: ApplicationStatus;
   phone?: string;
   email?: string;
+  reminderDate?: string;
+  notes?: string;
 }
 
 export interface CV {
   id:string;
   name: string;
   content: string;
+  yearsOfExperience?: number;
 }
 
 export interface GenerationHistoryItem {
@@ -57,10 +60,17 @@ export interface Lead {
 }
 
 export interface CVLayout {
+    id: string;
     name: string;
     description: string;
     keyFeatures: string[];
     previewContent: string;
+}
+
+export interface EmailTemplate {
+  id: string;
+  name: string;
+  body: string;
 }
 
 export type Theme = 'light' | 'dark';
