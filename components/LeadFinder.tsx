@@ -8,10 +8,27 @@ import { Copy, Pencil, Trash, Download } from './icons';
 type JobType = 'Todos' | 'Presencial' | 'Home Office' | 'Híbrido';
 type SearchSource = 'empresas' | 'sociais';
 
+const genericDomains = new Set([
+    'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'aol.com',
+    'icloud.com', 'protonmail.com', 'zoho.com', 'mail.com', 'gmx.com',
+    'live.com', 'msn.com', 'uol.com.br', 'bol.com.br', 'terra.com.br',
+    'ig.com.br'
+]);
+
 const isValidEmail = (email: string): boolean => {
     if (!email) return false;
+
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(String(email).toLowerCase());
+    if (!re.test(String(email).toLowerCase())) {
+        return false;
+    }
+
+    const domain = email.substring(email.lastIndexOf('@') + 1);
+    if (genericDomains.has(domain.toLowerCase())) {
+        return false;
+    }
+
+    return true;
 };
 
 const LeadFinder: React.FC = () => {

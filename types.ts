@@ -25,6 +25,7 @@ export interface CV {
   name: string;
   content: string;
   yearsOfExperience?: number;
+  portfolioLinks?: string[];
 }
 
 export interface GenerationHistoryItem {

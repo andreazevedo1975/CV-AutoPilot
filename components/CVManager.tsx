@@ -19,6 +19,7 @@ const CVManager: React.FC = () => {
     const [cvName, setCvName] = useState('');
     const [cvContent, setCvContent] = useState('');
     const [yearsOfExperience, setYearsOfExperience] = useState<number | ''>('');
+    const [portfolioLinks, setPortfolioLinks] = useState('');
     const [analyzingId, setAnalyzingId] = useState<string | null>(null);
     const [analysisResults, setAnalysisResults] = useState<{ [cvId: string]: string }>({});
     const [error, setError] = useState<string | null>(null);
@@ -103,11 +104,19 @@ const CVManager: React.FC = () => {
     const handleAddCv = async () => {
         if (!cvName || !cvContent) return;
         setIsAdding(true);
+
+        const linksArray = portfolioLinks.split('\n').filter(link => link.trim() !== '');
+        let fullCvContent = cvContent;
+        if (linksArray.length > 0) {
+            fullCvContent += `\n\n--- Portfólio ---\n` + linksArray.join('\n');
+        }
+
         const newCv: CV = {
             id: new Date().toISOString(),
             name: cvName,
-            content: cvContent,
+            content: fullCvContent,
             yearsOfExperience: yearsOfExperience ? Number(yearsOfExperience) : undefined,
+            portfolioLinks: linksArray.length > 0 ? linksArray : undefined,
         };
         setCvs(prevCvs => [...prevCvs, newCv]);
         
@@ -116,6 +125,7 @@ const CVManager: React.FC = () => {
         setCvName('');
         setCvContent('');
         setYearsOfExperience('');
+        setPortfolioLinks('');
         setUploadMessage('Clique para carregar (.pdf, .docx) ou cole o texto abaixo');
         setIsAdding(false);
     };
@@ -149,6 +159,7 @@ const CVManager: React.FC = () => {
                 </label>
                 <input style={styles.input} type="text" placeholder="Nome do Currículo (ex: 'Currículo de Engenheiro de Software')" value={cvName} onChange={(e) => setCvName(e.target.value)} />
                 <input style={styles.input} type="number" placeholder="Anos de Experiência (Opcional)" value={yearsOfExperience} onChange={(e) => setYearsOfExperience(e.target.value === '' ? '' : parseInt(e.target.value, 10))} />
+                <textarea style={{...styles.textarea, minHeight: '80px' }} placeholder="Links do Portfólio (um por linha, opcional)" value={portfolioLinks} onChange={(e) => setPortfolioLinks(e.target.value)} rows={3}></textarea>
                 <textarea style={styles.textarea} placeholder="O conteúdo do seu currículo aparecerá aqui após o upload, ou você pode colá-lo diretamente..." value={cvContent} onChange={(e) => setCvContent(e.target.value)} rows={15}></textarea>
                 <button style={isAdding ? styles.buttonDisabled : styles.button} onClick={handleAddCv} disabled={isAdding}>
                     {isAdding ? 'Salvando e Analisando...' : 'Salvar e Analisar Currículo'}
@@ -188,6 +199,20 @@ const CVManager: React.FC = () => {
                                         </button>
                                     </div>
                                 </div>
+                                {cv.portfolioLinks && cv.portfolioLinks.length > 0 && (
+                                    <div style={styles.portfolioSection}>
+                                        <strong style={styles.portfolioHeader}>Portfólio:</strong>
+                                        <ul style={styles.portfolioList}>
+                                            {cv.portfolioLinks.map((link, index) => (
+                                                <li key={index}>
+                                                    <a href={link} target="_blank" rel="noopener noreferrer" style={{color: colors.primary}}>
+                                                        {link}
+                                                    </a>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                                 {analysisResults[cv.id] && (
                                     <div style={styles.analysisResult}>
                                         <ReactMarkdown
@@ -326,6 +351,25 @@ const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
         borderTop: `1px solid ${colors.border}`,
         lineHeight: 1.6,
         color: colors.textPrimary,
+    },
+    portfolioSection: {
+        marginTop: '15px',
+        paddingTop: '15px',
+        borderTop: `1px solid ${colors.border}`,
+    },
+    portfolioHeader: {
+        color: colors.textPrimary,
+        fontSize: '14px',
+        marginBottom: '5px',
+        display: 'block',
+    },
+    portfolioList: {
+        listStyle: 'none',
+        padding: 0,
+        margin: '5px 0 0 0',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '5px',
     },
     footer: {
         marginTop: '40px',

@@ -54,6 +54,7 @@ export const generateContentForJob = async (
     prompt = `
       Otimize o seguinte currículo para a vaga descrita abaixo.
       O currículo otimizado deve destacar as experiências e habilidades mais relevantes para a vaga, reorganizando e reescrevendo seções conforme necessário.
+      Se houver uma seção de 'Portfólio', certifique-se de incluí-la de forma proeminente, talvez logo após o resumo ou contato.
       O objetivo é criar a melhor versão possível do currículo para esta vaga específica.
       Retorne APENAS o texto do currículo otimizado, sem comentários adicionais ou formatação Markdown.
 
@@ -71,6 +72,7 @@ export const generateContentForJob = async (
     prompt = `
       Escreva uma carta de apresentação profissional e concisa com base no currículo e na descrição da vaga abaixo.
       A carta deve ser direcionada à equipe de recrutamento da empresa, destacando como as habilidades e experiências do candidato atendem perfeitamente aos requisitos da vaga.
+      Se o currículo incluir um portfólio, mencione-o brevemente como um recurso para o recrutador ver mais exemplos de trabalho.
       O tom deve ser formal, mas entusiástico e confiante.
       Retorne APENAS o texto da carta de apresentação, sem comentários adicionais.
 
@@ -259,6 +261,7 @@ export const applyCVLayout = async (cvContent: string, layout: CVLayout): Promis
         Reestruture o seguinte currículo para seguir as diretrizes do layout "${layout.name}".
         O layout é descrito como: "${layout.description}".
         Características principais a serem consideradas: ${layout.keyFeatures.join(', ')}.
+        Se houver uma seção de 'Portfólio' no currículo original, certifique-se de que ela seja incluída no novo layout, mantendo seu próprio título de seção ## Portfólio ##.
         O resultado deve ser APENAS o texto do currículo reformatado.
         IMPORTANTE: Envolva CADA título de seção com ##. Por exemplo: ## Experiência Profissional ## ou ## Formação Acadêmica ##. Não use formatação Markdown.
 
