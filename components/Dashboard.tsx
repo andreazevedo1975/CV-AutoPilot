@@ -1,3 +1,4 @@
+
 // FIX: Implement the Dashboard component to display and manage job applications.
 import React, { useState, useContext } from 'react';
 import { Application, ApplicationStatus } from '../types';
@@ -47,6 +48,10 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
         setReminderDate('');
         setNotes('');
         setStatus(ApplicationStatus.Aplicou);
+    };
+
+    const updateApplication = (id: string, updates: Partial<Application>) => {
+        setApplications(prev => prev.map(app => app.id === id ? { ...app, ...updates } : app));
     };
 
     const handleDismissReminder = (appId: string) => {
@@ -107,7 +112,11 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
     };
     
     const today = new Date().toISOString().split('T')[0];
-    const upcomingReminders = applications.filter(app => app.reminderDate && app.reminderDate <= today);
+    
+    // Sort reminders by date
+    const reminders = applications
+        .filter(app => app.reminderDate)
+        .sort((a, b) => new Date(a.reminderDate!).getTime() - new Date(b.reminderDate!).getTime());
 
     // Data for the summary chart
     const statusCounts = Object.values(ApplicationStatus).reduce((acc, status) => {
@@ -161,25 +170,30 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
                 </div>
             </div>
 
-            {upcomingReminders.length > 0 && (
+            {reminders.length > 0 && (
                 <div style={styles.remindersContainer}>
-                    <h2 style={styles.subHeader}>Lembretes e Ações Pendentes</h2>
+                    <h2 style={styles.subHeader}>Próximas Entrevistas e Lembretes</h2>
                     <ul style={styles.list}>
-                        {upcomingReminders.map(app => (
-                            <li key={`reminder-${app.id}`} style={styles.reminderItem}>
-                                <div style={{ flex: 1 }}>
-                                    <strong>{app.jobTitle}</strong> em {app.companyName}
-                                    <div style={{ fontSize: '14px', color: colors.textSecondary, marginTop: '4px' }}>
-                                        Lembrete para: {new Date(app.reminderDate).toLocaleDateString()}
-                                        {app.reminderDate < today && <span style={styles.overdueLabel}> (Atrasado)</span>}
+                        {reminders.map(app => {
+                            const isOverdue = app.reminderDate! < today;
+                            const isToday = app.reminderDate! === today;
+                            return (
+                                <li key={`reminder-${app.id}`} style={styles.reminderItem}>
+                                    <div style={{ flex: 1 }}>
+                                        <strong>{app.jobTitle}</strong> em {app.companyName}
+                                        <div style={{ fontSize: '14px', color: colors.textSecondary, marginTop: '4px' }}>
+                                            Data: {new Date(app.reminderDate!).toLocaleDateString()}
+                                            {isOverdue && <span style={styles.overdueLabel}> (Atrasado)</span>}
+                                            {isToday && <span style={{color: colors.primary, fontWeight: 'bold'}}> (Hoje)</span>}
+                                        </div>
+                                        {app.notes && <p style={styles.notesText}>{app.notes}</p>}
                                     </div>
-                                    {app.notes && <p style={styles.notesText}>{app.notes}</p>}
-                                </div>
-                                <button onClick={() => handleDismissReminder(app.id)} style={styles.dismissButton}>
-                                    Marcar como Concluído
-                                </button>
-                            </li>
-                        ))}
+                                    <button onClick={() => handleDismissReminder(app.id)} style={styles.dismissButton}>
+                                        Concluir
+                                    </button>
+                                </li>
+                            );
+                        })}
                     </ul>
                 </div>
             )}
@@ -225,13 +239,24 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
                                         {app.jobTitle}
                                         {app.reminderDate && <Bell style={{ width: '16px', height: '16px', marginLeft: '8px', marginRight: '4px', color: colors.primary }} />}
                                     </strong> em {app.companyName}
-                                    <div style={{ fontSize: '14px', color: colors.textSecondary, marginTop: '4px' }}>
-                                        <span>Candidatou-se em: {new Date(app.dateApplied).toLocaleDateString()}</span>
-                                        <span style={{ marginLeft: '12px' }}>Status: {app.status}</span>
-                                        {app.reminderDate && <span style={{ marginLeft: '12px' }}>Lembrete: {new Date(app.reminderDate).toLocaleDateString()}</span>}
+                                    
+                                    <div style={{ fontSize: '14px', color: colors.textSecondary, marginTop: '8px' }}>
+                                        <div style={{ marginBottom: '8px' }}>Candidatou-se em: {new Date(app.dateApplied).toLocaleDateString()}</div>
+                                        
+                                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                                            <span>Status:</span>
+                                            <select 
+                                                value={app.status} 
+                                                onChange={(e) => updateApplication(app.id, { status: e.target.value as ApplicationStatus })}
+                                                style={styles.statusSelect}
+                                            >
+                                                {Object.values(ApplicationStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                                            </select>
+                                        </div>
                                     </div>
+
                                     {(app.phone || app.email) && (
-                                        <div style={{ fontSize: '14px', color: colors.textSecondary, marginTop: '4px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+                                        <div style={{ fontSize: '14px', color: colors.textSecondary, marginTop: '8px', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                                             {app.phone && (
                                                 <span style={{ display: 'flex', alignItems: 'center' }}>
                                                     <Phone /> {app.phone}
@@ -244,8 +269,32 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
                                             )}
                                         </div>
                                     )}
+
+                                    {app.status === ApplicationStatus.Entrevistando && (
+                                        <div style={styles.inlineReminderForm}>
+                                            <div style={{display:'flex', alignItems:'center', gap: '5px', marginBottom: '8px'}}>
+                                                <Bell style={{ width: '14px', height: '14px', color: colors.primary }} />
+                                                <span style={styles.miniLabel}>Agendar Entrevista:</span>
+                                            </div>
+                                            <div style={{display:'flex', gap:'10px', flexWrap:'wrap'}}>
+                                                <input 
+                                                    type="date" 
+                                                    value={app.reminderDate || ''} 
+                                                    onChange={(e) => updateApplication(app.id, { reminderDate: e.target.value })}
+                                                    style={styles.miniInput}
+                                                />
+                                                <input 
+                                                    type="text" 
+                                                    placeholder="Detalhes (Link, Horário...)" 
+                                                    value={app.notes || ''} 
+                                                    onChange={(e) => updateApplication(app.id, { notes: e.target.value })}
+                                                    style={{...styles.miniInput, flex: 1, minWidth: '150px'}}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
-                                <div>
+                                <div style={{ marginLeft: '15px' }}>
                                     {app.jobUrl && (
                                         <a href={app.jobUrl} target="_blank" rel="noopener noreferrer" style={styles.linkButton}>
                                             Ver Vaga
@@ -264,7 +313,7 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
     );
 };
 
-const getStyles = (colors): { [key:string]: React.CSSProperties } => ({
+const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
     container: { maxWidth: '800px' },
     header: { color: colors.primary },
     subHeader: { color: colors.primary, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', marginTop: '30px' },
@@ -304,7 +353,7 @@ const getStyles = (colors): { [key:string]: React.CSSProperties } => ({
         alignItems: 'center',
     },
     list: { listStyle: 'none', padding: 0 },
-    listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px', backgroundColor: colors.surface, borderRadius: '8px', border: `1px solid ${colors.border}`, marginBottom: '10px' },
+    listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '15px', backgroundColor: colors.surface, borderRadius: '8px', border: `1px solid ${colors.border}`, marginBottom: '10px' },
     linkButton: {
         padding: '8px 12px',
         backgroundColor: colors.primary,
@@ -411,6 +460,35 @@ const getStyles = (colors): { [key:string]: React.CSSProperties } => ({
         color: colors.textSecondary,
         paddingTop: '20px',
         borderTop: `1px solid ${colors.border}`
+    },
+    statusSelect: {
+        padding: '6px',
+        borderRadius: '4px',
+        border: `1px solid ${colors.border}`,
+        backgroundColor: colors.inputBg,
+        color: colors.inputText,
+        fontSize: '14px',
+        cursor: 'pointer'
+    },
+    inlineReminderForm: {
+        marginTop: '12px',
+        padding: '12px',
+        backgroundColor: colors.background,
+        borderRadius: '6px',
+        border: `1px dashed ${colors.border}`,
+    },
+    miniInput: {
+        padding: '6px',
+        borderRadius: '4px',
+        border: `1px solid ${colors.border}`,
+        backgroundColor: colors.inputBg,
+        color: colors.inputText,
+        fontSize: '14px'
+    },
+    miniLabel: {
+        fontSize: '13px',
+        fontWeight: '600',
+        color: colors.textSecondary
     }
 });
 

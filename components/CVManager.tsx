@@ -1,11 +1,12 @@
+
 // FIX: Implement the CVManager component to allow users to add and manage their CVs.
 import React, { useState, useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { CV } from '../types';
-import { analyzeCV } from '../services/geminiService';
+import { CV, CVLayout } from '../types';
+import { analyzeCV, generateCVLayoutSuggestions, applyCVLayout } from '../services/geminiService';
 import { ThemeContext } from '../App';
-import { Trash } from './icons';
+import { Trash, Sparkles, Download, Copy, Pencil } from './icons';
 
 // Declarations for libraries loaded via CDN
 declare const mammoth: any;
@@ -25,6 +26,16 @@ const CVManager: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [uploadMessage, setUploadMessage] = useState<string>('Clique para carregar (.pdf, .docx) ou cole o texto abaixo');
     const [isAdding, setIsAdding] = useState(false);
+
+    // Layout Modal State
+    const [showLayoutModal, setShowLayoutModal] = useState(false);
+    const [newlyCreatedCv, setNewlyCreatedCv] = useState<CV | null>(null);
+    const [layouts, setLayouts] = useState<CVLayout[]>([]);
+    const [isLoadingLayouts, setIsLoadingLayouts] = useState(false);
+    const [isApplyingLayout, setIsApplyingLayout] = useState(false);
+    const [appliedLayoutContent, setAppliedLayoutContent] = useState<string | null>(null);
+    const [selectedLayoutName, setSelectedLayoutName] = useState<string>('');
+    const [isCopied, setIsCopied] = useState(false);
 
 
     const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,8 +130,10 @@ const CVManager: React.FC = () => {
             portfolioLinks: linksArray.length > 0 ? linksArray : undefined,
         };
         setCvs(prevCvs => [...prevCvs, newCv]);
+        setNewlyCreatedCv(newCv);
         
-        await handleAnalyzeCv(newCv);
+        // Start analysis in background
+        handleAnalyzeCv(newCv);
 
         setCvName('');
         setCvContent('');
@@ -128,7 +141,76 @@ const CVManager: React.FC = () => {
         setPortfolioLinks('');
         setUploadMessage('Clique para carregar (.pdf, .docx) ou cole o texto abaixo');
         setIsAdding(false);
+
+        // Open Layout Modal automatically
+        setShowLayoutModal(true);
+        fetchLayoutSuggestions();
     };
+
+    const fetchLayoutSuggestions = async () => {
+        setIsLoadingLayouts(true);
+        try {
+            const suggestions = await generateCVLayoutSuggestions();
+            setLayouts(suggestions.map(s => ({ ...s, id: Math.random().toString(36).substr(2, 9) })));
+        } catch (err) {
+            console.error("Failed to fetch layouts", err);
+        } finally {
+            setIsLoadingLayouts(false);
+        }
+    };
+
+    const handleApplyLayout = async (layout: CVLayout) => {
+        if (!newlyCreatedCv) return;
+        setIsApplyingLayout(true);
+        setSelectedLayoutName(layout.name);
+        try {
+            const result = await applyCVLayout(newlyCreatedCv.content, layout);
+            setAppliedLayoutContent(result);
+        } catch (err) {
+            console.error("Failed to apply layout", err);
+        } finally {
+            setIsApplyingLayout(false);
+        }
+    };
+
+    const handleSaveStyledCv = () => {
+        if (!appliedLayoutContent || !newlyCreatedCv) return;
+        
+        const styledCv: CV = {
+            ...newlyCreatedCv,
+            id: new Date().toISOString(),
+            name: `${newlyCreatedCv.name} (${selectedLayoutName})`,
+            content: appliedLayoutContent
+        };
+        
+        setCvs(prev => [styledCv, ...prev]);
+        setShowLayoutModal(false);
+        setAppliedLayoutContent(null);
+        setNewlyCreatedCv(null);
+        handleAnalyzeCv(styledCv);
+    };
+
+    const handleCopy = () => {
+        if(appliedLayoutContent) {
+            navigator.clipboard.writeText(appliedLayoutContent);
+            setIsCopied(true);
+            setTimeout(() => setIsCopied(false), 2000);
+        }
+    };
+
+    const handleDownload = () => {
+        if(appliedLayoutContent) {
+            const blob = new Blob([appliedLayoutContent], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `CV_${selectedLayoutName.replace(/\s+/g, '_')}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+    }
 
     const handleDeleteCv = (cvId: string) => {
         if (window.confirm('Tem certeza de que deseja excluir este currículo? Esta ação não pode ser desfeita.')) {
@@ -165,6 +247,77 @@ const CVManager: React.FC = () => {
                     {isAdding ? 'Salvando e Analisando...' : 'Salvar e Analisar Currículo'}
                 </button>
             </div>
+
+            {/* Layout Suggestion Modal */}
+            {showLayoutModal && (
+                <div style={styles.modalBackdrop}>
+                    <div style={styles.modalContent}>
+                        <div style={styles.modalHeader}>
+                            <h2 style={{...styles.subHeader, marginTop: 0, border: 'none'}}>Currículo Salvo! Vamos dar um visual profissional?</h2>
+                            <button onClick={() => setShowLayoutModal(false)} style={styles.closeButton}>&times;</button>
+                        </div>
+                        
+                        {!appliedLayoutContent ? (
+                            <>
+                                <p style={styles.modalDescription}>
+                                    A IA pode reestruturar seu conteúdo em formatos profissionais. Selecione um estilo abaixo para aplicar automaticamente ao seu novo currículo.
+                                </p>
+                                {isLoadingLayouts ? (
+                                    <div style={{textAlign: 'center', padding: '40px'}}>
+                                        <Sparkles />
+                                        <p>Gerando sugestões de layout...</p>
+                                    </div>
+                                ) : (
+                                    <div style={styles.layoutGrid}>
+                                        {layouts.map((layout, idx) => (
+                                            <div key={idx} style={styles.layoutCard}>
+                                                <h3 style={{marginTop: 0, color: colors.primary}}>{layout.name}</h3>
+                                                <p style={{fontSize: '13px', color: colors.textSecondary}}>{layout.description}</p>
+                                                <div style={styles.previewBox}>
+                                                    <pre style={{fontSize: '10px', margin: 0}}>{layout.previewContent}</pre>
+                                                </div>
+                                                <button 
+                                                    style={isApplyingLayout ? styles.buttonDisabled : styles.button} 
+                                                    onClick={() => handleApplyLayout(layout)}
+                                                    disabled={isApplyingLayout}
+                                                >
+                                                    {isApplyingLayout ? 'Aplicando...' : 'Aplicar Este Layout'}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        ) : (
+                            <div style={styles.resultContainer}>
+                                <div style={styles.resultHeader}>
+                                    <h3>Visualização: {selectedLayoutName}</h3>
+                                    <div style={{display: 'flex', gap: '10px'}}>
+                                        <button onClick={() => setAppliedLayoutContent(null)} style={styles.secondaryButton}>Voltar</button>
+                                        <button onClick={handleSaveStyledCv} style={styles.button}>Salvar como Novo Currículo</button>
+                                    </div>
+                                </div>
+                                <div style={styles.previewContent}>
+                                    <pre style={{whiteSpace: 'pre-wrap', wordWrap: 'break-word'}}>{appliedLayoutContent}</pre>
+                                </div>
+                                <div style={styles.resultActions}>
+                                    <button style={isCopied ? styles.successButton : styles.secondaryButton} onClick={handleCopy}>
+                                        <Copy /> {isCopied ? 'Copiado' : 'Copiar Texto'}
+                                    </button>
+                                    <button style={styles.secondaryButton} onClick={handleDownload}>
+                                        <Download /> Baixar .txt
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        <div style={{textAlign: 'right', marginTop: '15px'}}>
+                             <button onClick={() => setShowLayoutModal(false)} style={{background: 'none', border: 'none', color: colors.textSecondary, cursor: 'pointer', textDecoration: 'underline'}}>
+                                Pular esta etapa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div style={styles.listContainer}>
                 <h2 style={styles.subHeader}>Currículos Salvos</h2>
@@ -274,6 +427,8 @@ const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
         borderRadius: '4px',
         cursor: 'not-allowed',
     },
+    secondaryButton: { padding: '8px 12px', fontSize: '14px', color: colors.textPrimary, backgroundColor: colors.background, border: `1px solid ${colors.border}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' },
+    successButton: { padding: '8px 12px', fontSize: '14px', color: colors.textOnPrimary, backgroundColor: colors.success, border: `1px solid ${colors.success}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' },
     listContainer: { marginTop: '30px' },
     list: { listStyle: 'none', padding: 0 },
     listItem: { 
@@ -371,6 +526,35 @@ const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
         flexDirection: 'column',
         gap: '5px',
     },
+    // Modal Styles
+    modalBackdrop: {
+        position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+        backgroundColor: 'rgba(0,0,0,0.6)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000,
+        padding: '20px'
+    },
+    modalContent: {
+        backgroundColor: colors.background, padding: '25px', borderRadius: '8px', width: '90%', maxWidth: '800px',
+        maxHeight: '90vh', overflowY: 'auto', border: `1px solid ${colors.border}`, position: 'relative'
+    },
+    modalHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
+    closeButton: { background: 'none', border: 'none', fontSize: '24px', cursor: 'pointer', color: colors.textSecondary },
+    modalDescription: { color: colors.textSecondary, marginBottom: '20px' },
+    layoutGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '20px' },
+    layoutCard: {
+        backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderRadius: '8px', padding: '15px',
+        display: 'flex', flexDirection: 'column', gap: '10px'
+    },
+    previewBox: {
+        backgroundColor: colors.background, padding: '10px', borderRadius: '4px', border: `1px solid ${colors.border}`,
+        height: '100px', overflow: 'hidden', opacity: 0.8
+    },
+    resultContainer: { display: 'flex', flexDirection: 'column', gap: '15px' },
+    resultHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' },
+    previewContent: {
+        maxHeight: '300px', overflowY: 'auto', padding: '20px', backgroundColor: colors.surface,
+        border: `1px solid ${colors.border}`, borderRadius: '4px', fontSize: '14px', color: colors.textPrimary
+    },
+    resultActions: { display: 'flex', gap: '10px', justifyContent: 'flex-end' },
     footer: {
         marginTop: '40px',
         textAlign: 'center',
