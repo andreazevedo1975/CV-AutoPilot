@@ -1,7 +1,10 @@
 {
   "name": "CV-AutoPilot",
-  "description": "Um assistente inteligente para otimizar seu currículo, gerar cartas de apresentação e acompanhar suas candidaturas de emprego, maximizando suas chances de conseguir uma entrevista.",
+  "description": "Plataforma executiva de inteligência em carreira e recrutamento: otimização algorítmica de currículos (ATS 99%), benchmarking salarial com Search Grounding em tempo real, auto-preenchimento de vagas (Gupy, LinkedIn, Workday), simulador por voz com a Dra. Valéria Silveira e Dossiê em PDF.",
   "requestFramePermissions": [
     "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]
 }

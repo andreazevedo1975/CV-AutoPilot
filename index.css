@@ -1,0 +1,378 @@
+/* Enterprise Design System - Executive HR & AI Suite */
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+
+:root {
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: dark light;
+}
+
+* {
+  box-sizing: border-box;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+  font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Smooth mobile scrolling */
+* {
+  -webkit-overflow-scrolling: touch;
+}
+
+::selection {
+  background-color: #881337;
+  color: #ffffff;
+}
+
+/* Custom Executive Slim Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.22);
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(159, 18, 57, 0.5);
+}
+
+/* Micro-interaction & Focus Rings */
+:focus-visible {
+  outline: 2px solid #9f1239;
+  outline-offset: 2px;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+/* Pulse animation for Live ATS & Voice Engine */
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.engine-pulse {
+  animation: pulse-ring 2s infinite cubic-bezier(0.4, 0, 0.6, 1);
+}
+
+@keyframes voice-wave {
+  0%, 100% { height: 6px; }
+  50% { height: 20px; }
+}
+
+.voice-bar {
+  animation: voice-wave 1.2s infinite ease-in-out;
+}
+
+/* ==========================================================================
+   Multi-Device Ergonomics: Mobile, Tablet, Notebook, TV & Ultra-wide
+   Garante a leitura 100% completa de qualquer tópico em qualquer tamanho de tela,
+   com suporte a escala dinâmica de fonte (Compacto, Normal e Confortável).
+   ========================================================================== */
+
+/* Regras Universais de Leitura Completa de Tópicos (Anti-Corte e Quebra Segura) */
+*, *::before, *::after {
+  overflow-wrap: break-word;
+}
+
+h1, h2, h3, h4, h5, h6, p, span, div, label, li, td, th {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+/* Identificadores longos, hashes e URLs sempre quebram para não estourar a tela */
+code, pre, .break-anywhere, [data-break-anywhere] {
+  overflow-wrap: anywhere !important;
+  word-break: break-all !important;
+}
+
+/* Modais e Overlays: sempre roláveis verticalmente sem prender ou cortar o topo/rodapé */
+.responsive-modal-overlay,
+.fixed.inset-0,
+div[style*="position: fixed"][style*="inset: 0"],
+div[style*="position: fixed"][style*="top: 0"][style*="left: 0"] {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Container de Modais com Altura Máxima Adaptável */
+.responsive-modal-container {
+  max-height: 94vh !important;
+  max-width: 95vw !important;
+  display: flex !important;
+  flex-direction: column !important;
+  margin: auto !important;
+}
+
+/* ==========================================================================
+   ESCALAS DE LEITURA (Compacto / Normal / Confortável)
+   Permite diminuir a fonte para visualização 100% completa do tópico na tela
+   ========================================================================== */
+
+:root {
+  --reading-scale: 1;
+  --topic-body-size: 14px;
+}
+
+/* Modo COMPACTO: Diminui proporcionalmente as fontes para que tópicos longos caibam inteiros */
+[data-reading-scale="compact"] {
+  --reading-scale: 0.88;
+  --topic-body-size: 12.5px;
+}
+
+[data-reading-scale="compact"] main {
+  font-size: 92% !important;
+}
+
+[data-reading-scale="compact"] h1 {
+  font-size: clamp(15px, 1.8vw, 21px) !important;
+  line-height: 1.25 !important;
+}
+
+[data-reading-scale="compact"] h2 {
+  font-size: clamp(13.5px, 1.5vw, 18px) !important;
+  line-height: 1.25 !important;
+}
+
+[data-reading-scale="compact"] h3 {
+  font-size: clamp(12.5px, 1.3vw, 15px) !important;
+  line-height: 1.25 !important;
+}
+
+[data-reading-scale="compact"] h4, 
+[data-reading-scale="compact"] h5 {
+  font-size: clamp(11.5px, 1.1vw, 13px) !important;
+}
+
+[data-reading-scale="compact"] p,
+[data-reading-scale="compact"] li,
+[data-reading-scale="compact"] label,
+[data-reading-scale="compact"] td,
+[data-reading-scale="compact"] th,
+[data-reading-scale="compact"] input,
+[data-reading-scale="compact"] select,
+[data-reading-scale="compact"] textarea {
+  font-size: 12.5px !important;
+  line-height: 1.45 !important;
+}
+
+[data-reading-scale="compact"] .markdownWrapper,
+[data-reading-scale="compact"] .markdown-content,
+[data-reading-scale="compact"] .analysisResult {
+  font-size: 12.5px !important;
+  line-height: 1.48 !important;
+}
+
+/* Modo NORMAL: Padrão balanceado */
+[data-reading-scale="normal"] {
+  --reading-scale: 1;
+  --topic-body-size: 14px;
+}
+
+/* Modo CONFORTÁVEL: Para quem deseja fontes maiores */
+[data-reading-scale="comfortable"] {
+  --reading-scale: 1.1;
+  --topic-body-size: 15.5px;
+}
+
+[data-reading-scale="comfortable"] h1 {
+  font-size: clamp(19px, 2.5vw, 26px) !important;
+}
+
+[data-reading-scale="comfortable"] h2 {
+  font-size: clamp(16px, 2vw, 21px) !important;
+}
+
+[data-reading-scale="comfortable"] p,
+[data-reading-scale="comfortable"] li {
+  font-size: 15px !important;
+  line-height: 1.65 !important;
+}
+
+/* ==========================================================================
+   BREAKPOINTS RESPONSIVOS PARA TODOS OS DISPOSITIVOS
+   ========================================================================== */
+
+/* Grids que se ajustam automaticamente para coluna única quando a tela for reduzida */
+@media screen and (max-width: 1024px) {
+  .responsive-split-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+}
+
+/* Dispositivos Móveis Ultra-Compactos (< 400px - iPhone SE, Galaxy Fold Fechado, etc.) */
+@media screen and (max-width: 399px) {
+  html {
+    font-size: 12.5px;
+  }
+
+  h1 { font-size: clamp(14px, 4.2vw, 17px) !important; line-height: 1.25 !important; }
+  h2 { font-size: clamp(13px, 3.8vw, 15px) !important; line-height: 1.25 !important; }
+  h3 { font-size: clamp(12px, 3.4vw, 14px) !important; line-height: 1.25 !important; }
+  h4 { font-size: 11px !important; }
+  p, li, label, span:not(.badge-fixed) { font-size: 12px !important; line-height: 1.4 !important; }
+
+  /* Redução de preenchimento para garantir aproveitamento máximo da tela */
+  .responsive-modal-container {
+    width: 98vw !important;
+    max-width: 98vw !important;
+    padding: 10px !important;
+    margin: 2px !important;
+  }
+}
+
+/* Extra Small Phones (Viewport 400px a 479px) */
+@media screen and (min-width: 400px) and (max-width: 479px) {
+  html {
+    font-size: 13px;
+  }
+
+  /* Ajuste proporcional para caber todo o conteúdo do tópico sem quebrar ou truncar */
+  h1 { font-size: clamp(15px, 4.5vw, 18px) !important; line-height: 1.25 !important; }
+  h2 { font-size: clamp(13.5px, 4vw, 16px) !important; line-height: 1.25 !important; }
+  h3 { font-size: clamp(12.5px, 3.5vw, 14.5px) !important; line-height: 1.25 !important; }
+  h4 { font-size: 11.5px !important; }
+  p, li, label { font-size: 12.5px !important; line-height: 1.42 !important; }
+
+  /* Evitar cortes em botões e barras de ação */
+  .responsive-actions-wrap {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .responsive-modal-container {
+    width: 96vw !important;
+    max-width: 96vw !important;
+    padding: 12px !important;
+    margin: 4px !important;
+  }
+}
+
+/* Mobile Phones Padrão (Viewport 480px a 767px) */
+@media screen and (min-width: 480px) and (max-width: 767px) {
+  html {
+    font-size: 13.5px;
+  }
+
+  h1 { font-size: clamp(17px, 3.8vw, 20px) !important; line-height: 1.25 !important; }
+  h2 { font-size: clamp(14.5px, 3.2vw, 17px) !important; line-height: 1.25 !important; }
+  h3 { font-size: clamp(13px, 2.8vw, 15px) !important; line-height: 1.25 !important; }
+  p, li, label { font-size: 13px !important; line-height: 1.45 !important; }
+
+  .responsive-modal-overlay {
+    padding: 10px !important;
+  }
+
+  .responsive-modal-container {
+    max-width: 94vw !important;
+    width: 94vw !important;
+    margin: 0 auto !important;
+    border-radius: 14px !important;
+  }
+}
+
+/* Tablets & Notebooks Compactos (768px a 1023px) */
+@media screen and (min-width: 768px) and (max-width: 1023px) {
+  html {
+    font-size: 14px;
+  }
+
+  h1 { font-size: clamp(18px, 2.4vw, 22px) !important; }
+  h2 { font-size: clamp(15px, 2vw, 18px) !important; }
+  p, li { font-size: 13.5px !important; line-height: 1.5 !important; }
+
+  ::-webkit-scrollbar {
+    width: 7px;
+    height: 7px;
+  }
+}
+
+/* Laptops & Monitores Padrão (1024px a 1439px) */
+@media screen and (min-width: 1024px) and (max-width: 1439px) {
+  html {
+    font-size: 14.5px;
+  }
+
+  h1 { font-size: clamp(20px, 1.8vw, 24px) !important; }
+  h2 { font-size: clamp(16px, 1.4vw, 19px) !important; }
+}
+
+/* Displays Amplos (1440px a 1919px) */
+@media screen and (min-width: 1440px) and (max-width: 1919px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+/* Smart TV, 4K & Monitores Ultra-wide (>= 1920px) */
+@media screen and (min-width: 1920px) {
+  html {
+    font-size: 16px;
+  }
+
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+
+  body {
+    letter-spacing: 0.005em;
+  }
+}
+
+/* Grandes Telas 4K (>= 2560px) */
+@media screen and (min-width: 2560px) {
+  html {
+    font-size: 17.5px;
+  }
+}
+
+/* Print optimization for CVs and Executive Dossiers */
+@media print {
+  aside, nav, header, button, .no-print {
+    display: none !important;
+  }
+
+  body, main {
+    background: #ffffff !important;
+    color: #000000 !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+}
+

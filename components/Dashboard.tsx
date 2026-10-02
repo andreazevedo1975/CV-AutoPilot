@@ -1,18 +1,37 @@
 
 // FIX: Implement the Dashboard component to display and manage job applications.
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useCallback } from 'react';
 import { Application, ApplicationStatus } from '../types';
 import { ThemeContext } from '../App';
 import { Phone, Mail, Bell, Download } from './icons';
+import { RefreshCw, Zap, CheckCircle2, CloudSync, Clock, Target, ChevronRight, Send } from 'lucide-react';
+import WeeklyApplicationsChart from './WeeklyApplicationsChart';
+import DashboardComparativeCharts from './DashboardComparativeCharts';
+import CareerInsights from './CareerInsights';
+import { useBackgroundSync } from '../hooks/useBackgroundSync';
+import { useOnlineStatus } from '../hooks/useOnlineStatus';
+import { BackgroundSyncModal } from './BackgroundSyncModal';
 
 interface DashboardProps {
     applications: Application[];
     setApplications: React.Dispatch<React.SetStateAction<Application[]>>;
+    onNavigateToSWOT?: () => void;
+    onNavigateToDispatcher?: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) => {
+const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications, onNavigateToSWOT, onNavigateToDispatcher }) => {
     const { colors } = useContext(ThemeContext);
     const styles = getStyles(colors);
+    const isOnline = useOnlineStatus();
+    const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
+    const [syncToastMessage, setSyncToastMessage] = useState<string | null>(null);
+
+    const handleSyncCompleted = useCallback((summary: any) => {
+        setSyncToastMessage(`Background Sync (Workbox): ${summary.syncedCount} alteração(ões) sincronizada(s) com sucesso!`);
+        setTimeout(() => setSyncToastMessage(null), 5000);
+    }, []);
+
+    const { pendingCount, pendingMutations, isSyncing, recordOfflineChange, syncNow } = useBackgroundSync(handleSyncCompleted);
     
     const [jobTitle, setJobTitle] = useState('');
     const [companyName, setCompanyName] = useState('');
@@ -40,6 +59,17 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
             notes: notes || undefined,
         };
         setApplications([...applications, newApplication]);
+
+        // Registrar mutação no Background Sync se estiver sem conexão
+        if (!isOnline) {
+            recordOfflineChange(
+                'APPLICATION_CREATE',
+                newApplication.id,
+                newApplication,
+                `Nova candidatura "${newApplication.jobTitle}" em ${newApplication.companyName} gravada offline`
+            );
+        }
+
         setJobTitle('');
         setCompanyName('');
         setPhone('');
@@ -51,7 +81,21 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
     };
 
     const updateApplication = (id: string, updates: Partial<Application>) => {
+        const existing = applications.find(a => a.id === id);
         setApplications(prev => prev.map(app => app.id === id ? { ...app, ...updates } : app));
+
+        // Registrar atualização no Background Sync do Workbox se estiver offline
+        if (!isOnline && existing) {
+            const desc = updates.status 
+                ? `Status de "${existing.companyName} (${existing.jobTitle})" alterado para "${updates.status}"` 
+                : `Candidatura "${existing.companyName}" atualizada offline`;
+            recordOfflineChange(
+                'APPLICATION_STATUS_UPDATE',
+                id,
+                updates,
+                desc
+            );
+        }
     };
 
     const handleDismissReminder = (appId: string) => {
@@ -142,9 +186,275 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
         [ApplicationStatus.Ignorado]: '#718096',
     };
 
+    const handleSeedSampleApplications = () => {
+        const now = Date.now();
+        const DAY = 86400000;
+        const sampleApps: Application[] = [
+            {
+                id: 'sample-app-1',
+                jobTitle: 'Senior Frontend Engineer',
+                companyName: 'Nubank',
+                dateApplied: new Date(now - 24 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Entrevistando,
+                reminderDate: new Date(now + 2 * DAY).toISOString().split('T')[0],
+                notes: 'Entrevista técnica de arquitetura React & System Design às 15h via Meet',
+                email: 'tech-talent@nubank.com.br'
+            },
+            {
+                id: 'sample-app-2',
+                jobTitle: 'Tech Lead Full Stack',
+                companyName: 'Mercado Livre',
+                dateApplied: new Date(now - 20 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Entrevistando,
+                reminderDate: new Date(now + 4 * DAY).toISOString().split('T')[0],
+                notes: 'Conversa com Engineering Manager sobre liderança de squads',
+                email: 'carreiras@mercadolivre.com'
+            },
+            {
+                id: 'sample-app-3',
+                jobTitle: 'Especialista React / TypeScript',
+                companyName: 'Stone Co.',
+                dateApplied: new Date(now - 14 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Entrevistando,
+                reminderDate: new Date(now - 1 * DAY).toISOString().split('T')[0],
+                notes: 'Desafio prático de código aprovado com nota máxima!',
+                phone: '(11) 98765-4321'
+            },
+            {
+                id: 'sample-app-4',
+                jobTitle: 'Staff Software Engineer',
+                companyName: 'PicPay',
+                dateApplied: new Date(now - 11 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Entrevistando,
+                reminderDate: new Date(now + 6 * DAY).toISOString().split('T')[0],
+                notes: 'Apresentação de case técnico sobre escalabilidade financeira'
+            },
+            {
+                id: 'sample-app-5',
+                jobTitle: 'Arquiteto Cloud & Soluções',
+                companyName: 'Itaú Unibanco',
+                dateApplied: new Date(now - 18 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Visualizado,
+                email: 'recrutamento@itau.com.br'
+            },
+            {
+                id: 'sample-app-6',
+                jobTitle: 'Engenheiro de Software Sênior',
+                companyName: 'TOTVS',
+                dateApplied: new Date(now - 9 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Aplicou
+            },
+            {
+                id: 'sample-app-7',
+                jobTitle: 'Líder Técnico de Front-End',
+                companyName: 'XP Inc.',
+                dateApplied: new Date(now - 5 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Aplicou
+            },
+            {
+                id: 'sample-app-8',
+                jobTitle: 'Product Engineer',
+                companyName: 'QuintoAndar',
+                dateApplied: new Date(now - 2 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Aplicou
+            },
+            {
+                id: 'sample-app-9',
+                jobTitle: 'Principal Software Engineer',
+                companyName: 'Amazon Web Services',
+                dateApplied: new Date(now - 28 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Oferta,
+                reminderDate: new Date(now - 10 * DAY).toISOString().split('T')[0],
+                notes: 'Oferta recebida para L6 Software Development Engineer!'
+            },
+            {
+                id: 'sample-app-10',
+                jobTitle: 'Desenvolvedor Frontend Sênior',
+                companyName: 'B3 - Brasil, Bolsa, Balcão',
+                dateApplied: new Date(now - 16 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Aplicou
+            },
+            {
+                id: 'sample-app-11',
+                jobTitle: 'Tech Lead React Native',
+                companyName: 'Ambev Tech',
+                dateApplied: new Date(now - 62 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Rejeitado,
+                notes: 'Feedback educado: buscaram perfil mais voltado a iOS nativo.'
+            },
+            {
+                id: 'sample-app-12',
+                jobTitle: 'Staff Frontend Engineer',
+                companyName: 'Localiza Labs',
+                dateApplied: new Date(now - 55 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Rejeitado,
+                notes: 'Processo pausado internamente pelo comitê executivo.'
+            },
+            {
+                id: 'sample-app-13',
+                jobTitle: 'Engineering Manager',
+                companyName: 'BTG Pactual',
+                dateApplied: new Date(now - 45 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Entrevistando,
+                reminderDate: new Date(now - 35 * DAY).toISOString().split('T')[0],
+                notes: 'Primeira fase com RH e liderança de engenharia concluída.'
+            },
+            {
+                id: 'sample-app-14',
+                jobTitle: 'Senior Software Engineer',
+                companyName: 'Google Brasil',
+                dateApplied: new Date(now - 40 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Rejeitado,
+                notes: 'Posição sênior congelada para o trimestre.'
+            },
+            {
+                id: 'sample-app-15',
+                jobTitle: 'Arquiteto de Soluções Cloud',
+                companyName: 'Microsoft Brasil',
+                dateApplied: new Date(now - 34 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Entrevistando,
+                reminderDate: new Date(now - 22 * DAY).toISOString().split('T')[0],
+                notes: 'Entrevista técnica sobre Azure e microsserviços.'
+            },
+            {
+                id: 'sample-app-16',
+                jobTitle: 'Lead Frontend Developer',
+                companyName: 'Loggi',
+                dateApplied: new Date(now - 22 * DAY).toISOString().split('T')[0],
+                status: ApplicationStatus.Rejeitado,
+                notes: 'Processo finalizado com escolha de candidato interno.'
+            }
+        ];
+        setApplications(sampleApps);
+    };
+
     return (
         <div style={styles.container}>
-            <h1 style={styles.header}>Painel de Candidaturas</h1>
+            <div style={{ marginBottom: '20px' }}>
+                <h1 style={styles.header}>Painel de Candidaturas</h1>
+                <p style={{ color: colors.textSecondary, fontSize: '14px', margin: '4px 0 0 0' }}>
+                    Gestão analítica de oportunidades, métricas de conversão de RH e agendamento de entrevistas.
+                </p>
+            </div>
+
+            {/* Banner de Inteligência Estratégica: Análise SWOT Pessoal */}
+            <div style={{
+                backgroundColor: colors.surfaceElevated,
+                border: `1px solid ${colors.primary}35`,
+                borderRadius: '12px',
+                padding: '16px 20px',
+                marginBottom: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                gap: '14px',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.03)'
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                    <div style={{
+                        width: '42px',
+                        height: '42px',
+                        borderRadius: '10px',
+                        backgroundColor: `${colors.primary}18`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: colors.primary,
+                        flexShrink: 0
+                    }}>
+                        <Target size={22} />
+                    </div>
+                    <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 800, color: colors.textPrimary }}>
+                                Análise SWOT Pessoal de Carreira (IA)
+                            </h3>
+                            <span style={{
+                                padding: '2px 8px',
+                                borderRadius: '100px',
+                                fontSize: '10px',
+                                fontWeight: 700,
+                                backgroundColor: `${colors.primary}20`,
+                                color: colors.primary,
+                                textTransform: 'uppercase'
+                            }}>
+                                Novo Módulo
+                            </span>
+                        </div>
+                        <p style={{ margin: '3px 0 0 0', fontSize: '13px', color: colors.textSecondary }}>
+                            Diagnóstico estratégico de <strong>Forças, Fraquezas, Oportunidades e Ameaças</strong> cruzando suas {totalApplications} candidaturas e currículos cadastrados.
+                        </p>
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    {onNavigateToDispatcher && (
+                        <button
+                            onClick={onNavigateToDispatcher}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '9px 16px',
+                                borderRadius: '8px',
+                                backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                                color: colors.success,
+                                border: '1px solid #10b981',
+                                fontWeight: 700,
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <Send size={15} />
+                            <span>Disparador de Currículo</span>
+                        </button>
+                    )}
+
+                    {onNavigateToSWOT && (
+                        <button
+                            onClick={onNavigateToSWOT}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                padding: '9px 16px',
+                                borderRadius: '8px',
+                                backgroundColor: colors.primary,
+                                color: '#ffffff',
+                                border: 'none',
+                                fontWeight: 700,
+                                fontSize: '13px',
+                                cursor: 'pointer',
+                                boxShadow: '0 2px 10px rgba(136, 19, 55, 0.25)',
+                                transition: 'all 0.2s ease'
+                            }}
+                        >
+                            <span>Abrir Matriz SWOT</span>
+                            <ChevronRight size={16} />
+                        </button>
+                    )}
+                </div>
+            </div>
+
+            {/* Insights de Carreira: Recharts - Evolução de Entrevistas Agendadas vs Negativas Recebidas por Mês */}
+            <CareerInsights 
+                applications={applications}
+                onAddSampleData={handleSeedSampleApplications}
+            />
+
+            {/* Gráfico de Barras: Candidaturas Enviadas vs. Entrevistas Agendadas por Semana */}
+            <WeeklyApplicationsChart 
+                applications={applications} 
+                onAddSampleData={handleSeedSampleApplications}
+            />
+
+            {/* Gráficos Comparativos: Taxa de Sucesso ao Longo dos Meses e Distribuição de Status com Recharts */}
+            <DashboardComparativeCharts 
+                applications={applications}
+                onAddSampleData={handleSeedSampleApplications}
+            />
 
             <div style={styles.summaryContainer}>
                 <h2 style={{...styles.subHeader, marginTop: 0}}>Resumo das Candidaturas</h2>
@@ -198,6 +508,126 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
                 </div>
             )}
             
+            {/* Toast Feedback de Sincronização em Segundo Plano Concluída */}
+            {syncToastMessage && (
+                <div style={{
+                    backgroundColor: '#065f46',
+                    color: '#ffffff',
+                    padding: '12px 18px',
+                    borderRadius: '10px',
+                    marginBottom: '16px',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px',
+                    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.2)'
+                }}>
+                    <CheckCircle2 size={18} color="#34d399" />
+                    <span style={{ flex: 1 }}>{syncToastMessage}</span>
+                    <button onClick={() => setSyncToastMessage(null)} style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', fontSize: '14px' }}>&times;</button>
+                </div>
+            )}
+
+            {/* Banner de Sincronização em Segundo Plano (Workbox) se houver mutações pendentes */}
+            {pendingCount > 0 && (
+                <div style={{
+                    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                    border: '1px solid rgba(245, 158, 11, 0.35)',
+                    borderRadius: '12px',
+                    padding: '14px 18px',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '12px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '260px' }}>
+                        <div style={{
+                            width: '36px',
+                            height: '36px',
+                            borderRadius: '8px',
+                            backgroundColor: 'rgba(245, 158, 11, 0.2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#f59e0b',
+                            flexShrink: 0
+                        }}>
+                            <RefreshCw size={18} className={isSyncing ? 'animate-spin' : ''} />
+                        </div>
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <strong style={{ fontSize: '13.5px', color: colors.textPrimary }}>
+                                    Background Sync (Workbox): {pendingCount} alteração{pendingCount > 1 ? 'ões' : ''} offline gravada{pendingCount > 1 ? 's' : ''}
+                                </strong>
+                                <span style={{
+                                    fontSize: '10px',
+                                    fontWeight: 800,
+                                    padding: '1px 6px',
+                                    borderRadius: '4px',
+                                    backgroundColor: isOnline ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                                    color: isOnline ? '#10b981' : '#f59e0b'
+                                }}>
+                                    {isOnline ? 'Pronto para sincronizar' : 'Aguardando rede'}
+                                </span>
+                            </div>
+                            <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: colors.textSecondary, lineHeight: 1.4 }}>
+                                {isOnline 
+                                    ? 'A conexão com a internet foi restabelecida. O Workbox está reconciliando as candidaturas automaticamente.' 
+                                    : 'Você está navegando offline. Todas as alterações de status e novas vagas estão seguras e serão enviadas quando a internet voltar.'}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                        {isOnline && (
+                            <button
+                                type="button"
+                                onClick={() => syncNow()}
+                                disabled={isSyncing}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '7px 14px',
+                                    borderRadius: '8px',
+                                    backgroundColor: '#10b981',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    fontSize: '12px',
+                                    fontWeight: 700,
+                                    cursor: isSyncing ? 'not-allowed' : 'pointer'
+                                }}
+                            >
+                                <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} />
+                                <span>{isSyncing ? 'Sincronizando...' : 'Sincronizar Agora'}</span>
+                            </button>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => setIsSyncModalOpen(true)}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '7px 14px',
+                                borderRadius: '8px',
+                                backgroundColor: colors.surface,
+                                color: colors.textPrimary,
+                                border: `1px solid ${colors.border}`,
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                            }}
+                        >
+                            <span>Ver Fila ({pendingCount})</span>
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <form onSubmit={handleSubmit} style={styles.form}>
                 <h2 style={styles.subHeader}>Adicionar Nova Candidatura</h2>
                 <input style={styles.input} type="text" placeholder="Cargo" value={jobTitle} onChange={(e) => setJobTitle(e.target.value)} required />
@@ -232,7 +662,9 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
                 </div>
                 {applications.length === 0 ? <p>Nenhuma candidatura ainda.</p> : (
                     <ul style={styles.list}>
-                        {applications.map(app => (
+                        {applications.map(app => {
+                            const isPendingSync = pendingMutations.some(m => m.entityId === app.id);
+                            return (
                              <li key={app.id} style={styles.listItem}>
                                 <div style={{ flex: 1 }}>
                                     <strong style={{ display: 'flex', alignItems: 'center' }}>
@@ -252,6 +684,21 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
                                             >
                                                 {Object.values(ApplicationStatus).map(s => <option key={s} value={s}>{s}</option>)}
                                             </select>
+                                            {isPendingSync && (
+                                                <span style={{
+                                                    fontSize: '11px',
+                                                    fontWeight: 700,
+                                                    padding: '3px 8px',
+                                                    borderRadius: '6px',
+                                                    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                                                    color: '#f59e0b',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px'
+                                                }}>
+                                                    <Clock size={12} /> Sync Pendente (Workbox)
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
 
@@ -302,10 +749,19 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
                                     )}
                                 </div>
                             </li>
-                        ))}
+                            );
+                        })}
                     </ul>
                 )}
             </div>
+
+            {/* Modal de Gestão de Fila do Background Sync (Workbox) */}
+            <BackgroundSyncModal
+                isOpen={isSyncModalOpen}
+                onClose={() => setIsSyncModalOpen(false)}
+                colors={colors}
+            />
+
             <footer style={styles.footer}>
                 Copyright by André Azevedo
             </footer>
@@ -314,54 +770,56 @@ const Dashboard: React.FC<DashboardProps> = ({ applications, setApplications }) 
 };
 
 const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
-    container: { maxWidth: '800px' },
-    header: { color: colors.primary },
-    subHeader: { color: colors.primary, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', marginTop: '30px' },
-    form: { display: 'flex', flexDirection: 'column', gap: '10px', padding: '20px', backgroundColor: colors.surface, borderRadius: '8px', border: `1px solid ${colors.border}`, },
-    input: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText },
-    select: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText },
-    button: { padding: '10px 20px', fontSize: '16px', color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '4px', cursor: 'pointer' },
-    listContainer: { marginTop: '30px' },
+    container: { maxWidth: '1200px', margin: '0 auto' },
+    header: { color: colors.textPrimary, fontSize: '24px', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '8px' },
+    subHeader: { color: colors.textPrimary, fontSize: '20px', fontWeight: '700', borderBottom: `1px solid ${colors.border}`, paddingBottom: '12px', marginTop: '36px', letterSpacing: '-0.01em' },
+    form: { display: 'flex', flexDirection: 'column', gap: '14px', padding: '24px', backgroundColor: colors.surface, borderRadius: '14px', border: `1px solid ${colors.border}`, boxShadow: colors.shadow || '0 4px 20px rgba(0,0,0,0.06)' },
+    input: { padding: '12px 14px', fontSize: '15px', borderRadius: '8px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText, outline: 'none' },
+    select: { padding: '12px 14px', fontSize: '15px', borderRadius: '8px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText, outline: 'none' },
+    button: { padding: '12px 24px', fontSize: '15px', fontWeight: 600, color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(37,99,235,0.25)', transition: 'opacity 0.2s' },
+    listContainer: { marginTop: '36px' },
     listHeader: {
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        marginBottom: '15px',
+        marginBottom: '18px',
     },
     exportButton: {
-        padding: '8px 16px',
-        fontSize: '14px',
-        fontWeight: 500,
+        padding: '9px 16px',
+        fontSize: '13px',
+        fontWeight: 600,
         color: colors.textOnPrimary,
         backgroundColor: colors.primary,
         border: 'none',
-        borderRadius: '4px',
+        borderRadius: '8px',
         cursor: 'pointer',
         display: 'flex',
         alignItems: 'center',
+        gap: '6px',
     },
     exportButtonDisabled: {
-        padding: '8px 16px',
-        fontSize: '14px',
-        fontWeight: 500,
+        padding: '9px 16px',
+        fontSize: '13px',
+        fontWeight: 600,
         color: colors.buttonDisabledText,
         backgroundColor: colors.buttonDisabledBg,
         border: 'none',
-        borderRadius: '4px',
+        borderRadius: '8px',
         cursor: 'not-allowed',
         display: 'flex',
         alignItems: 'center',
+        gap: '6px',
     },
     list: { listStyle: 'none', padding: 0 },
-    listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', padding: '15px', backgroundColor: colors.surface, borderRadius: '8px', border: `1px solid ${colors.border}`, marginBottom: '10px' },
+    listItem: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '12px', padding: '18px', backgroundColor: colors.surface, borderRadius: '14px', border: `1px solid ${colors.border}`, marginBottom: '14px', boxShadow: colors.shadow || '0 2px 12px rgba(0,0,0,0.04)' },
     linkButton: {
-        padding: '8px 12px',
+        padding: '9px 14px',
         backgroundColor: colors.primary,
         color: colors.textOnPrimary,
         textDecoration: 'none',
-        borderRadius: '4px',
-        fontWeight: 500,
-        fontSize: '14px',
+        borderRadius: '8px',
+        fontWeight: 600,
+        fontSize: '13px',
         whiteSpace: 'nowrap',
     },
     reminderFields: {

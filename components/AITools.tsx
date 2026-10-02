@@ -3,10 +3,12 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { CV, GenerationHistoryItem, CVLayout } from '../types';
 import { generateContentForJob, generateCVLayoutSuggestions, applyCVLayout } from '../services/geminiService';
 import { ThemeContext } from '../App';
-import { Copy, Download } from './icons';
+import { Copy, Download, Sparkles, Target } from './icons';
+import JobTailoredCVBuilder from './JobTailoredCVBuilder';
+import JobMatchAnalyzer from './JobMatchAnalyzer';
 
 type GenerationType = 'cv' | 'cover-letter';
-type ActiveTab = 'generator' | 'layouts';
+type ActiveTab = 'analyzer' | 'tailored-cv' | 'generator' | 'layouts';
 
 const getLayoutCardStyles = (colors): { [key: string]: React.CSSProperties } => ({
     card: { backgroundColor: colors.background, border: `1px solid ${colors.border}`, borderRadius: '8px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' },
@@ -22,27 +24,27 @@ const getLayoutCardStyles = (colors): { [key: string]: React.CSSProperties } => 
 });
 
 const getStyles = (colors): { [key: string]: React.CSSProperties } => ({
-    container: { maxWidth: '800px' },
-    header: { color: colors.primary },
-    description: { color: colors.textSecondary, marginBottom: '20px', lineHeight: 1.5 },
-    subHeader: { color: colors.primary, borderBottom: `1px solid ${colors.border}`, paddingBottom: '10px', marginTop: '30px' },
-    form: { display: 'flex', flexDirection: 'column', gap: '15px', padding: '20px', backgroundColor: colors.surface, borderRadius: '8px', border: `1px solid ${colors.border}`, borderTopLeftRadius: 0 },
-    inputGroup: { display: 'flex', flexDirection: 'column', gap: '5px' },
-    label: { fontSize: '14px', fontWeight: 500, color: colors.textSecondary },
-    select: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText },
-    textarea: { padding: '10px', fontSize: '16px', borderRadius: '4px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText, minHeight: '150px' },
-    button: { padding: '12px 20px', fontSize: '16px', color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '4px', cursor: 'pointer' },
-    buttonDisabled: { padding: '12px 20px', fontSize: '16px', color: colors.buttonDisabledText, backgroundColor: colors.buttonDisabledBg, border: 'none', borderRadius: '4px', cursor: 'not-allowed' },
-    error: { color: '#f56565', textAlign: 'center', marginTop: '10px' },
-    resultContainer: { marginTop: '30px' },
-    resultHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' },
+    container: { maxWidth: '1200px', margin: '0 auto' },
+    header: { color: colors.textPrimary, fontSize: '24px', fontWeight: '800', letterSpacing: '-0.02em', marginBottom: '8px' },
+    description: { color: colors.textSecondary, marginBottom: '24px', lineHeight: 1.6, fontSize: '15px' },
+    subHeader: { color: colors.textPrimary, fontSize: '20px', fontWeight: '700', borderBottom: `1px solid ${colors.border}`, paddingBottom: '12px', marginTop: '36px', letterSpacing: '-0.01em' },
+    form: { display: 'flex', flexDirection: 'column', gap: '16px', padding: '24px', backgroundColor: colors.surface, borderRadius: '14px', border: `1px solid ${colors.border}`, borderTopLeftRadius: 0, boxShadow: colors.shadow || '0 4px 20px rgba(0,0,0,0.06)' },
+    inputGroup: { display: 'flex', flexDirection: 'column', gap: '6px' },
+    label: { fontSize: '14px', fontWeight: 600, color: colors.textPrimary },
+    select: { padding: '12px 14px', fontSize: '15px', borderRadius: '8px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText, outline: 'none' },
+    textarea: { padding: '14px', fontSize: '15px', borderRadius: '8px', border: `1px solid ${colors.border}`, backgroundColor: colors.inputBg, color: colors.inputText, minHeight: '150px', lineHeight: 1.6, outline: 'none' },
+    button: { padding: '12px 24px', fontSize: '15px', fontWeight: 600, color: colors.textOnPrimary, backgroundColor: colors.primary, border: 'none', borderRadius: '8px', cursor: 'pointer', boxShadow: '0 2px 8px rgba(37,99,235,0.25)' },
+    buttonDisabled: { padding: '12px 24px', fontSize: '15px', fontWeight: 600, color: colors.buttonDisabledText, backgroundColor: colors.buttonDisabledBg, border: 'none', borderRadius: '8px', cursor: 'not-allowed' },
+    error: { color: '#ef4444', textAlign: 'center', marginTop: '10px', fontWeight: 600 },
+    resultContainer: { marginTop: '36px' },
+    resultHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' },
     resultActions: { display: 'flex', gap: '10px' },
-    actionButton: { padding: '8px 12px', fontSize: '14px', color: colors.primary, backgroundColor: 'transparent', border: `1px solid ${colors.primary}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' },
-    actionButtonSuccess: { padding: '8px 12px', fontSize: '14px', color: colors.textOnPrimary, backgroundColor: colors.success, border: `1px solid ${colors.success}`, borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' },
-    resultContent: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: colors.surface, padding: '15px', borderRadius: '8px', border: `1px solid ${colors.border}`, maxHeight: '400px', overflowY: 'auto', color: colors.textPrimary },
-    tabs: { display: 'flex' },
-    tab: { padding: '10px 20px', cursor: 'pointer', backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderBottom: 'none', borderRight: 'none', color: colors.textSecondary, fontWeight: 500 },
-    tabActive: { padding: '10px 20px', cursor: 'pointer', backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderBottom: `2px solid ${colors.primary}`, color: colors.primary, fontWeight: 'bold' },
+    actionButton: { padding: '9px 14px', fontSize: '13px', fontWeight: 600, color: colors.primary, backgroundColor: colors.primaryLight || 'transparent', border: `1px solid ${colors.border}`, borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' },
+    actionButtonSuccess: { padding: '9px 14px', fontSize: '13px', fontWeight: 600, color: colors.textOnPrimary, backgroundColor: colors.success, border: `1px solid ${colors.success}`, borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px' },
+    resultContent: { whiteSpace: 'pre-wrap', wordWrap: 'break-word', background: colors.surface, padding: '20px', borderRadius: '12px', border: `1px solid ${colors.border}`, maxHeight: '450px', overflowY: 'auto', color: colors.textPrimary, lineHeight: 1.6, boxShadow: colors.shadow || 'none' },
+    tabs: { display: 'flex', gap: '4px' },
+    tab: { padding: '12px 22px', cursor: 'pointer', backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderBottom: 'none', borderRadius: '10px 10px 0 0', color: colors.textSecondary, fontWeight: 600, fontSize: '14px' },
+    tabActive: { padding: '12px 22px', cursor: 'pointer', backgroundColor: colors.surface, border: `1px solid ${colors.border}`, borderBottom: `2px solid ${colors.primary}`, borderRadius: '10px 10px 0 0', color: colors.primary, fontWeight: '700', fontSize: '14px' },
     layoutsGrid: { display: 'grid', gridTemplateColumns: '1fr', gap: '20px', marginTop: '20px' },
     colorCustomizationSection: { marginTop: '20px', padding: '15px', backgroundColor: colors.background, borderRadius: '8px', border: `1px solid ${colors.border}` },
     customizationHeader: { color: colors.primary, marginTop: 0, fontSize: '1.1em' },
@@ -141,7 +143,7 @@ const AITools: React.FC = () => {
     // Common State
     const [cvs] = useLocalStorage<CV[]>('cvs', []);
     const [history, setHistory] = useLocalStorage<GenerationHistoryItem[]>('generationHistory', []);
-    const [activeTab, setActiveTab] = useState<ActiveTab>('generator');
+    const [activeTab, setActiveTab] = useState<ActiveTab>('tailored-cv');
 
     // Generator Tab State
     const [generationType, setGenerationType] = useState<GenerationType>('cv');
@@ -165,10 +167,10 @@ const AITools: React.FC = () => {
     const [backgroundColor, setBackgroundColor] = useState(colors.surface);
     
     useEffect(() => {
-        setTitleColor(colors.primary);
-        setTextColor(colors.textPrimary);
-        setBackgroundColor(colors.surface);
-    }, [colors]);
+        setTitleColor(prev => prev === colors.primary ? prev : colors.primary);
+        setTextColor(prev => prev === colors.textPrimary ? prev : colors.textPrimary);
+        setBackgroundColor(prev => prev === colors.surface ? prev : colors.surface);
+    }, [colors.primary, colors.textPrimary, colors.surface]);
 
     const handleGenerate = async () => {
         if (!selectedCvId || !jobDescription) {
@@ -378,11 +380,51 @@ const AITools: React.FC = () => {
             </p>
 
             <div style={styles.tabs}>
-                <button style={activeTab === 'generator' ? styles.tabActive : styles.tab} onClick={() => setActiveTab('generator')}>Otimização de CV/Carta</button>
-                <button style={activeTab === 'layouts' ? styles.tabActive : styles.tab} onClick={() => setActiveTab('layouts')}>Layouts de Currículo</button>
+                <button 
+                    style={activeTab === 'analyzer' ? styles.tabActive : styles.tab} 
+                    onClick={() => setActiveTab('analyzer')}
+                >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <Target style={{ width: '15px', height: '15px' }} />
+                        Analista de Vagas (JD Match)
+                    </span>
+                </button>
+                <button 
+                    style={activeTab === 'tailored-cv' ? styles.tabActive : styles.tab} 
+                    onClick={() => setActiveTab('tailored-cv')}
+                >
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        <Sparkles style={{ width: '15px', height: '15px' }} />
+                        Currículo Sob Medida (ATS 99%)
+                    </span>
+                </button>
+                <button 
+                    style={activeTab === 'generator' ? styles.tabActive : styles.tab} 
+                    onClick={() => setActiveTab('generator')}
+                >
+                    Otimização Rápida / Carta
+                </button>
+                <button 
+                    style={activeTab === 'layouts' ? styles.tabActive : styles.tab} 
+                    onClick={() => setActiveTab('layouts')}
+                >
+                    Layouts de Currículo
+                </button>
             </div>
 
-            {activeTab === 'generator' ? renderGeneratorTab() : renderLayoutsTab()}
+            {activeTab === 'analyzer' ? (
+                <div style={{ marginTop: '20px' }}>
+                    <JobMatchAnalyzer onNavigateToTailoredCV={() => setActiveTab('tailored-cv')} />
+                </div>
+            ) : activeTab === 'tailored-cv' ? (
+                <div style={{ marginTop: '20px' }}>
+                    <JobTailoredCVBuilder />
+                </div>
+            ) : activeTab === 'generator' ? (
+                renderGeneratorTab()
+            ) : (
+                renderLayoutsTab()
+            )}
 
              <footer style={styles.footer}>
                 Copyright by André Azevedo

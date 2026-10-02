@@ -1,0 +1,20 @@
+{
+  "name": "CV-AutoPilot Enterprise",
+  "short_name": "CV-AutoPilot",
+  "description": "Plataforma executiva de inteligência em carreira e recrutamento: otimização algorítmica de currículos (ATS 99%), simulador de entrevista por voz e radar de vagas.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0e090c",
+  "theme_color": "#881337",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "/src/assets/images/cv_autopilot_logo_1789832318438.jpg",
+      "sizes": "192x192 512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity", "utilities"],
+  "lang": "pt-BR"
+}

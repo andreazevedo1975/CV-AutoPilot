@@ -1,5 +1,5 @@
 // FIX: Import React to make the React namespace available for type definitions.
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 export function useLocalStorage<T,>(key: string, initialValue: T): [T, React.Dispatch<React.SetStateAction<T>>] {
   const [storedValue, setStoredValue] = useState<T>(() => {
@@ -12,20 +12,30 @@ export function useLocalStorage<T,>(key: string, initialValue: T): [T, React.Dis
     }
   });
 
-  const setValue = (value: T | ((val: T) => T)) => {
+  const setValue: React.Dispatch<React.SetStateAction<T>> = useCallback((value: React.SetStateAction<T>) => {
     try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
-      setStoredValue(valueToStore);
-      window.localStorage.setItem(key, JSON.stringify(valueToStore));
+      setStoredValue(prev => {
+        const valueToStore = typeof value === 'function'
+          ? (value as (val: T) => T)(prev)
+          : value;
+        try {
+          window.localStorage.setItem(key, JSON.stringify(valueToStore));
+        } catch (error) {
+          console.error(error);
+        }
+        return valueToStore;
+      });
     } catch (error) {
       console.error(error);
     }
-  };
+  }, [key]);
 
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === key) {
-        setStoredValue(JSON.parse(e.newValue || 'null'));
+      if (e.key === key && e.newValue !== null) {
+        try {
+          setStoredValue(JSON.parse(e.newValue));
+        } catch {}
       }
     };
     window.addEventListener('storage', handleStorageChange);
