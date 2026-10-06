@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { CV, GenerationHistoryItem, CVLayout } from '../types';
 import { generateContentForJob, generateCVLayoutSuggestions, applyCVLayout } from '../services/geminiService';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { Copy, Download, Sparkles, Target } from './icons';
 import JobTailoredCVBuilder from './JobTailoredCVBuilder';
 import JobMatchAnalyzer from './JobMatchAnalyzer';

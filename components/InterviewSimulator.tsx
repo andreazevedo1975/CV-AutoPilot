@@ -1,7 +1,7 @@
 // InterviewSimulator.tsx - Interactive Voice & STAR Interview Simulator with Dra. Valéria Silveira
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { InterviewConfig, InterviewTurn, InterviewEvaluation, InterviewSessionRecord } from '../types';
 import { generateInterviewQuestion, evaluateInterviewAnswer } from '../services/geminiService';

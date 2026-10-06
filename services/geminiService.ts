@@ -60,6 +60,11 @@ import {
   cropImageFromBoundingBox
 } from '../utils/contactUtils';
 import { getNeighborhoodsByCity } from '../constants/brazilLocations';
+import { 
+  executeReal360CandidateSearch, 
+  executeReal360JobSearch, 
+  executeReal360WebSweep 
+} from './realSearch360Service';
 
 // Initialize the Google Gemini AI client
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
@@ -626,8 +631,8 @@ Encontre entre 5 e 8 candidatos representativos de alta qualidade na localidade.
             };
         });
     } catch (error) {
-        console.error("Error searching local candidates:", error);
-        throw new Error("Não foi possível buscar candidatos locais no momento. Verifique os termos da busca e tente novamente.");
+        console.warn("Transicionando para Varredura 360° em Fontes Reais (Zero API):", error);
+        return executeReal360CandidateSearch(params);
     }
 };
 
@@ -794,8 +799,8 @@ Encontre entre 5 e 10 vagas reais e relevantes na região indicada.
             };
         });
     } catch (error) {
-        console.error("Error searching local jobs:", error);
-        throw new Error("Não foi possível buscar vagas locais no momento. Tente novamente com termos mais amplos ou outra cidade/UF.");
+        console.warn("Transicionando para Varredura 360° em Fontes Reais (Zero API):", error);
+        return executeReal360JobSearch(params);
     }
 };
 
@@ -5641,10 +5646,10 @@ Diretrizes Obrigatórias:
       }));
     }
 
-    return buildHeuristicSweptOpportunities();
+    return executeReal360WebSweep(params);
   } catch (err) {
-    console.warn("Falha na varredura Gemini por palavra-chave, aplicando fallback:", err);
-    return buildHeuristicSweptOpportunities();
+    console.warn("Transicionando para Varredura 360° em Fontes Reais (Zero API):", err);
+    return executeReal360WebSweep(params);
   }
 };
 

@@ -14,7 +14,7 @@ import {
   ExternalLinkIcon,
   MicIcon
 } from './icons';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 
 const HR_DIRECTOR_AVATAR = "/src/assets/images/hr_director_avatar_1789832765437.jpg";
 

@@ -1,6 +1,6 @@
 // components/LoginScreen.tsx - Tela Executiva de Login com 10 Contas de Teste, Renovação Inteligente por IP e Gestão Segura de Senha do Administrador (Ciclo 3 Meses)
 import React, { useState, useContext, useEffect, useMemo, useRef } from 'react';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { 
   AuthService, 
   ADMIN_EMAIL, 

@@ -2,7 +2,7 @@
 // FIX: Implement the Dashboard component to display and manage job applications.
 import React, { useState, useContext, useCallback } from 'react';
 import { Application, ApplicationStatus } from '../types';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { Phone, Mail, Bell, Download } from './icons';
 import { RefreshCw, Zap, CheckCircle2, CloudSync, Clock, Target, ChevronRight, Send } from 'lucide-react';
 import WeeklyApplicationsChart from './WeeklyApplicationsChart';

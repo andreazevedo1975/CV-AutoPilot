@@ -12,7 +12,7 @@ import {
   ReferenceLine
 } from 'recharts';
 import { Application, ApplicationStatus } from '../types';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { 
   BarChart3, 
   TrendingUp, 

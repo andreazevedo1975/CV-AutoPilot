@@ -32,7 +32,7 @@ import {
 } from './components/icons';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Application, Theme, AuthUser } from './types';
-import { Monitor, Download, LogOut, User, Globe, DollarSign, TrendingUp, Share2, HardDrive, RefreshCw, Send } from 'lucide-react';
+import { Monitor, Download, LogOut, User, Globe, DollarSign, TrendingUp, Share2, HardDrive, RefreshCw, Send, BookOpen, HelpCircle } from 'lucide-react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import WindowsInstallerModal from './components/WindowsInstallerModal';
 import { ExternalAccessModal } from './components/ExternalAccessModal';
@@ -42,6 +42,9 @@ import JobFormAutofill from './components/JobFormAutofill';
 import SalaryBenchmarking from './components/SalaryBenchmarking';
 import { PersonalSWOTAnalysis } from './components/PersonalSWOTAnalysis';
 import { CVAutoDispatcher } from './components/CVAutoDispatcher';
+import { CVAutoPilot360 } from './components/CVAutoPilot360';
+import { SystemManualFAQ } from './components/SystemManualFAQ';
+import { ScreenContextFAQModal } from './components/ScreenContextFAQModal';
 import { OfflineIndicator } from './components/OfflineIndicator';
 import { PWAInstallButton } from './components/PWAInstallButton';
 import { OfflineDocumentsModal } from './components/OfflineDocumentsModal';
@@ -52,17 +55,18 @@ import { useBackgroundSync } from './hooks/useBackgroundSync';
 // Custom enterprise logo generated for CV-AutoPilot
 const LOGO_SRC = "/src/assets/images/cv_autopilot_logo_1789832318438.jpg";
 
-type View = 'dashboard' | 'cv-manager' | 'contact-extractor' | 'job-tailored-cv' | 'job-analyzer' | 'ai-tools' | 'history' | 'creative-studio' | 'lead-finder' | 'form-autofill' | 'salary-benchmark' | 'personal-swot' | 'cv-dispatcher';
+type View = 'dashboard' | 'cv-manager' | 'contact-extractor' | 'job-tailored-cv' | 'job-analyzer' | 'ai-tools' | 'history' | 'creative-studio' | 'lead-finder' | 'form-autofill' | 'salary-benchmark' | 'personal-swot' | 'cv-dispatcher' | 'autopilot-dispatcher' | 'faq-manual';
 
+import { themes, ThemeContext, defaultThemeContext } from './ThemeContext';
 export { themes, ThemeContext, defaultThemeContext } from './ThemeContext';
 export type { ThemeColors, ThemeContextType } from './ThemeContext';
-import { themes, ThemeContext, defaultThemeContext } from './ThemeContext';
 
 const App: React.FC = () => {
   // Acesso Universal: Qualquer pessoa com a URL acessa diretamente no ambiente de teste
   // com 100% das funcionalidades liberadas, sem exigir login do Google ou credenciais prévias.
   const [currentUser, setCurrentUser] = useState<AuthUser>(() => AuthService.ensureActiveSession());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isScreenFaqModalOpen, setIsScreenFaqModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState<View>('cv-manager');
   const [theme, setTheme] = useLocalStorage<Theme>('theme', 'dark');
   const [applications, setApplications] = useLocalStorage<Application[]>('applications', []);
@@ -180,6 +184,10 @@ const App: React.FC = () => {
         return <PersonalSWOTAnalysis onNavigateToCVManager={() => setCurrentView('cv-manager')} onNavigateToApplications={() => setCurrentView('dashboard')} />;
       case 'cv-dispatcher':
         return <CVAutoDispatcher onNavigateToApplications={() => setCurrentView('dashboard')} onNavigateToCVManager={() => setCurrentView('cv-manager')} />;
+      case 'autopilot-dispatcher':
+        return <CVAutoPilot360 onNavigateToApplications={() => setCurrentView('dashboard')} onNavigateToCVManager={() => setCurrentView('cv-manager')} onNavigateToDispatcher={() => setCurrentView('cv-dispatcher')} />;
+      case 'faq-manual':
+        return <SystemManualFAQ colors={currentThemeColors} theme={theme} onNavigateToView={(view: View) => setCurrentView(view)} />;
       default:
         return <CVManager onNavigateToSWOT={() => setCurrentView('personal-swot')} onNavigateToDispatcher={() => setCurrentView('cv-dispatcher')} />;
     }
@@ -189,6 +197,13 @@ const App: React.FC = () => {
     {
       title: 'CARREIRA & INTELIGÊNCIA ARTIFICIAL',
       items: [
+        { 
+          id: 'autopilot-dispatcher', 
+          label: 'Piloto Automático 360° (Disparador)', 
+          icon: <Bot size={18} />, 
+          badge: 'CopiVaga • Loopcv',
+          description: 'Disparador automático multicanais baseado em CopiVaga, VagaAutomática, Loopcv e JobCopilot'
+        },
         { 
           id: 'cv-dispatcher', 
           label: 'Disparador de Currículo (IA)', 
@@ -286,6 +301,18 @@ const App: React.FC = () => {
           description: 'Dra. Valéria Silveira • Dossiê PDF'
         },
       ]
+    },
+    {
+      title: 'MANUAL & AJUDA DO SISTEMA',
+      items: [
+        { 
+          id: 'faq-manual', 
+          label: 'Manual do Sistema & FAQ', 
+          icon: <BookOpen size={18} />, 
+          badge: 'PDF • PPTX',
+          description: 'Guia didático de todas as 11 telas com o Professor Sênior e exportação em PDF e PPTX'
+        },
+      ]
     }
   ];
 
@@ -367,6 +394,13 @@ const App: React.FC = () => {
           title: 'Simulador STAR por Voz & Mentoria Executiva',
           badge: 'Mentoria STAR',
           subtitle: 'Treinamento de resposta com feedback fonético/textual e emissão de Dossiê Executivo em PDF.'
+        };
+      case 'faq-manual':
+        return {
+          category: 'Instrução & Suporte',
+          title: 'Manual Completo do Sistema & FAQ Interativo',
+          badge: 'PDF • PPTX • Prof. Sênior',
+          subtitle: 'Guia didático detalhado de todas as 11 telas e funcionalidades com exportação em PDF e PowerPoint (.pptx).'
         };
       default: 
         return {
@@ -905,6 +939,31 @@ const App: React.FC = () => {
                       {currentDetails.title}
                     </h1>
                     <span style={styles.topHeaderBadge}>{currentDetails.badge}</span>
+
+                    {/* Botão Contextual de FAQ e Guia Desta Tela */}
+                    <button
+                      type="button"
+                      onClick={() => setIsScreenFaqModalOpen(true)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        padding: isMobile ? '2px 7px' : '4px 10px',
+                        borderRadius: '8px',
+                        border: `1px solid ${currentThemeColors.borderFocus || '#881337'}`,
+                        backgroundColor: currentThemeColors.primaryLight || 'rgba(136, 19, 55, 0.1)',
+                        color: currentThemeColors.primary,
+                        fontSize: isMobile ? '10px' : '11.5px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                        flexShrink: 0
+                      }}
+                      title={`Abrir FAQ e Guia de Funcionalidades detalhado da tela ${currentDetails.title}`}
+                    >
+                      <HelpCircle size={13} color={currentThemeColors.primary} />
+                      <span>FAQ Desta Tela</span>
+                    </button>
                   </div>
                 </div>
                 {!isMobile && (
@@ -1025,6 +1084,41 @@ const App: React.FC = () => {
                   color: '#10b981'
                 }}>
                   Aberta
+                </span>
+              </button>
+
+              {/* Botão Manual & FAQ com Professor Sênior (PDF & PPTX) */}
+              <button 
+                type="button"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: isMobile ? '5px 8px' : '6px 12px',
+                  borderRadius: '10px',
+                  border: currentView === 'faq-manual' ? `1px solid ${currentThemeColors.primary}` : `1px solid ${currentThemeColors.border}`,
+                  backgroundColor: currentView === 'faq-manual' ? (currentThemeColors.primaryLight || 'rgba(136, 19, 55, 0.12)') : currentThemeColors.surface,
+                  cursor: 'pointer',
+                  color: currentView === 'faq-manual' ? currentThemeColors.primary : currentThemeColors.textPrimary,
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  transition: 'all 0.15s ease',
+                  flexShrink: 0
+                }}
+                onClick={() => setCurrentView('faq-manual')}
+                title="Abrir o Manual do Sistema e FAQ do Professor Sênior com exportação em PDF e PPTX"
+              >
+                <BookOpen size={14} color={currentThemeColors.primary} />
+                {!isMobile && <span>Manual & FAQ</span>}
+                <span style={{
+                  fontSize: '9.5px',
+                  fontWeight: 800,
+                  padding: '1px 6px',
+                  borderRadius: '4px',
+                  backgroundColor: currentThemeColors.primaryLight,
+                  color: currentThemeColors.primary
+                }}>
+                  Guia
                 </span>
               </button>
 
@@ -1206,6 +1300,48 @@ const App: React.FC = () => {
           onClose={() => setIsSyncModalOpen(false)}
           colors={currentThemeColors}
         />
+
+        {/* Modal de FAQ e Guia Contextual de Todas as Telas */}
+        <ScreenContextFAQModal
+          isOpen={isScreenFaqModalOpen}
+          onClose={() => setIsScreenFaqModalOpen(false)}
+          currentView={currentView}
+          colors={currentThemeColors}
+          theme={theme}
+          onNavigateToView={(view: View) => setCurrentView(view)}
+        />
+
+        {/* Botão Flutuante (FAB) de FAQ & Ajuda Presente em TODAS as Telas */}
+        <div style={{
+          position: 'fixed',
+          bottom: isMobile ? '76px' : '24px',
+          right: '20px',
+          zIndex: 1050
+        }}>
+          <button
+            type="button"
+            onClick={() => setIsScreenFaqModalOpen(true)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: isMobile ? '9px 14px' : '11px 18px',
+              borderRadius: '30px',
+              backgroundColor: currentThemeColors.primary,
+              color: '#ffffff',
+              border: `2px solid rgba(255, 255, 255, 0.25)`,
+              boxShadow: '0 8px 24px rgba(136, 19, 55, 0.45)',
+              cursor: 'pointer',
+              fontSize: isMobile ? '12px' : '13px',
+              fontWeight: 800,
+              transition: 'all 0.2s ease'
+            }}
+            title={`Abrir FAQ e Guia de Funcionalidades da tela ${currentDetails.title}`}
+          >
+            <HelpCircle size={18} />
+            <span>FAQ desta Tela</span>
+          </button>
+        </div>
 
         {/* Notificador de Modo Offline (Suporte a Usuários em Trânsito via Workbox) */}
         <OfflineIndicator 

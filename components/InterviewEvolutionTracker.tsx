@@ -1,6 +1,6 @@
 // InterviewEvolutionTracker.tsx - Tracks candidate performance evolution over time with Dra. Valéria's feedback
 import React, { useState, useContext } from 'react';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { InterviewSessionRecord, InterviewTurn } from '../types';
 import {
   TrendingUpIcon,

@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react';
 import { RHPlatformAccount, RHPlatformId } from '../types';
 import { DEFAULT_RH_PLATFORMS } from '../constants/rhPlatforms';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { 
   CheckCircleIcon, 
   ExternalLinkIcon, 

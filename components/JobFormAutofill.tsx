@@ -25,7 +25,7 @@ import {
   BookmarkPlus,
   Share2
 } from 'lucide-react';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { 
   CV, 

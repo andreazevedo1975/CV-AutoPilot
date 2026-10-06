@@ -1,5 +1,6 @@
 // Senior CV Manager Component - Enterprise Resumes Management & Batch ZIP Export
 import React, { useState, useContext, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import JSZip from 'jszip';
 import { jsPDF } from 'jspdf';
@@ -50,12 +51,14 @@ import { CVBackupModal } from './CVBackupModal';
 import { LinkedInImportModal } from './LinkedInImportModal';
 import { CVExportPdfModal } from './CVExportPdfModal';
 import { CVBatchZipExportModal } from './CVBatchZipExportModal';
+import { CVBatchPdfExportModal } from './CVBatchPdfExportModal';
 import { CVSkillsField } from './CVSkillsField';
 import { 
   generateExecutiveCvPdfBlob, 
   downloadExecutiveCvPdf 
 } from '../services/cvPdfExportService';
-import { ThemeContext } from '../App';
+import { downloadBatchExecutiveCvPdf } from '../services/cvBatchPdfService';
+import { ThemeContext } from '../ThemeContext';
 import { Trash, Sparkles, Download, Copy } from './icons';
 
 // Declarations for libraries loaded via CDN
@@ -89,10 +92,12 @@ const CVManager: React.FC<CVManagerProps> = ({ onNavigateToSWOT, onNavigateToDis
     const [uploadMessage, setUploadMessage] = useState<string>('Clique para carregar (.pdf, .docx) ou cole o texto abaixo');
     const [isAdding, setIsAdding] = useState(false);
 
-    // Multi-selection & Batch ZIP Export State
+    // Multi-selection & Batch ZIP / Batch PDF Export State
     const [selectedCvIds, setSelectedCvIds] = useState<string[]>([]);
     const [isExportingZip, setIsExportingZip] = useState(false);
     const [showBatchZipModal, setShowBatchZipModal] = useState(false);
+    const [showBatchPdfModal, setShowBatchPdfModal] = useState(false);
+    const [isExportingBatchPdf, setIsExportingBatchPdf] = useState(false);
     const [cvSearchFilter, setCvSearchFilter] = useState('');
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -805,6 +810,31 @@ Sistema de Otimização e Automação de Candidaturas ATS.
         }
     };
 
+    // Quick direct download for Batch PDF into single file
+    const handleQuickDownloadBatchPdf = () => {
+        if (selectedCvIds.length === 0) {
+            setToastMessage('Selecione pelo menos um currículo para exportar em PDF único.');
+            return;
+        }
+        setIsExportingBatchPdf(true);
+        try {
+            const selectedList = cvs.filter(c => selectedCvIds.includes(c.id));
+            downloadBatchExecutiveCvPdf(selectedList, analysisResults, {
+                theme: 'bordeaux',
+                includeCoverPage: true,
+                includeTableOfContents: true,
+                includeAtsAudit: true,
+                includePortfolioLinks: true
+            });
+            setToastMessage(`✓ ${selectedList.length} currículo(s) consolidado(s) e baixado(s) em arquivo único (.PDF)!`);
+        } catch (err) {
+            console.error('Erro ao baixar PDF único em lote:', err);
+            setToastMessage('Erro ao gerar arquivo único em PDF.');
+        } finally {
+            setIsExportingBatchPdf(false);
+        }
+    };
+
     // Open Executive PDF Export Modal with live preview & customization
     const handleOpenExportPdfModal = (cv: CV) => {
         setPdfExportCv(cv);
@@ -1249,7 +1279,63 @@ FORMAÇÃO ACADÊMICA
                                 <span>{isAllSelected ? 'Desmarcar Todos' : 'Selecionar Todos'}</span>
                             </button>
 
-                            {/* MAIN REQUIRED BUTTON: 'Exportar Selecionados' */}
+                            {/* Badge Indicador de Contagem na Barra de Ações */}
+                            <AnimatePresence>
+                                {selectedCvIds.length > 0 && (
+                                    <motion.div
+                                        key="toolbar-selection-count-badge"
+                                        initial={{ opacity: 0, scale: 0.75, x: -6 }}
+                                        animate={{ opacity: 1, scale: 1, x: 0 }}
+                                        exit={{ opacity: 0, scale: 0.75, x: -6 }}
+                                        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                                        style={styles.actionBarSelectionIndicator}
+                                    >
+                                        <CheckCircle2 size={14} color={colors.primary} />
+                                        <AnimatePresence mode="popLayout">
+                                            <motion.span
+                                                key={`badge-count-${selectedCvIds.length}`}
+                                                initial={{ scale: 0.4, opacity: 0, y: -4 }}
+                                                animate={{ scale: 1, opacity: 1, y: 0 }}
+                                                exit={{ scale: 0.4, opacity: 0, y: 4 }}
+                                                transition={{ type: 'spring', stiffness: 550, damping: 20 }}
+                                                style={styles.actionBarCountPill}
+                                            >
+                                                {selectedCvIds.length}
+                                            </motion.span>
+                                        </AnimatePresence>
+                                        <span style={styles.actionBarCountText}>
+                                            {selectedCvIds.length === 1 ? '1 selecionado' : `${selectedCvIds.length} selecionados`}
+                                        </span>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
+
+                            {/* BATCH ACTION 1: 'Exportar em PDF Único' */}
+                            <button
+                                style={selectedCvIds.length === 0 || isExportingBatchPdf ? styles.exportBatchPdfBtnDisabled : styles.exportBatchPdfBtn}
+                                onClick={() => setShowBatchPdfModal(true)}
+                                disabled={selectedCvIds.length === 0 || isExportingBatchPdf}
+                                title="Exportar múltiplos currículos selecionados consolidados em um único arquivo PDF corporativo com capa e sumário"
+                            >
+                                <FileDown size={16} />
+                                <span>Exportar em PDF Único</span>
+                                <AnimatePresence mode="popLayout">
+                                    {selectedCvIds.length > 0 && (
+                                        <motion.span
+                                            key={`badge-batch-pdf-${selectedCvIds.length}`}
+                                            initial={{ scale: 0.3, opacity: 0, y: -4 }}
+                                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                                            exit={{ scale: 0.3, opacity: 0 }}
+                                            transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+                                            style={styles.actionBtnCountBadge}
+                                        >
+                                            {selectedCvIds.length}
+                                        </motion.span>
+                                    )}
+                                </AnimatePresence>
+                            </button>
+
+                            {/* BATCH ACTION 2: 'Exportar Pacote .ZIP' */}
                             <button
                                 style={selectedCvIds.length === 0 || isExportingZip ? styles.exportZipBtnDisabled : styles.exportZipBtn}
                                 onClick={() => setShowBatchZipModal(true)}
@@ -1257,63 +1343,112 @@ FORMAÇÃO ACADÊMICA
                                 title="Abrir painel para exportar múltiplos currículos selecionados em arquivo .zip com organização de perfis"
                             >
                                 <Archive size={16} />
-                                <span>Exportar Selecionados {selectedCvIds.length > 0 ? `(${selectedCvIds.length})` : ''}</span>
+                                <span>Exportar .ZIP</span>
+                                <AnimatePresence mode="popLayout">
+                                    {selectedCvIds.length > 0 && (
+                                        <motion.span
+                                            key={`badge-batch-zip-${selectedCvIds.length}`}
+                                            initial={{ scale: 0.3, opacity: 0, y: -4 }}
+                                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                                            exit={{ scale: 0.3, opacity: 0 }}
+                                            transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+                                            style={styles.actionBtnCountBadge}
+                                        >
+                                            {selectedCvIds.length}
+                                        </motion.span>
+                                    )}
+                                </AnimatePresence>
                             </button>
                         </div>
                     )}
                 </div>
 
                 {/* Sticky/Floating Selection Notice Bar */}
-                {cvs.length > 0 && selectedCvIds.length > 0 && (
-                    <div style={styles.selectionBar}>
-                        <div style={styles.selectionBarLeft}>
-                            <span style={styles.selectionBadge}>
-                                {selectedCvIds.length} de {cvs.length} selecionado{selectedCvIds.length !== 1 ? 's' : ''}
-                            </span>
-                            <span style={styles.selectionBarText}>
-                                Pronto para exportação em lote (.zip contendo .PDF, .TXT, .MD e pareceres ATS)
-                            </span>
-                        </div>
-                        <div style={styles.selectionBarRight}>
-                            <button 
-                                style={styles.clearSelectionBtn}
-                                onClick={() => setSelectedCvIds([])}
-                            >
-                                Limpar Seleção
-                            </button>
-                            {selectedCvIds.length === 1 && (
-                                <button
-                                    style={styles.exportPdfBtnInline}
-                                    onClick={() => {
-                                        const singleCv = cvs.find(c => c.id === selectedCvIds[0]);
-                                        if (singleCv) handleOpenExportPdfModal(singleCv);
-                                    }}
-                                    title="Visualizar e exportar o currículo selecionado em PDF Executivo Profissional"
+                <AnimatePresence>
+                    {cvs.length > 0 && selectedCvIds.length > 0 && (
+                        <motion.div 
+                            layout
+                            initial={{ opacity: 0, y: -16, scale: 0.98 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -16, scale: 0.98 }}
+                            transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                            style={styles.selectionBar}
+                        >
+                            <div style={styles.selectionBarLeft}>
+                                <div style={styles.selectionBadge}>
+                                    <AnimatePresence mode="popLayout">
+                                        <motion.span
+                                            key={`count-indicator-${selectedCvIds.length}`}
+                                            initial={{ scale: 0.4, opacity: 0 }}
+                                            animate={{ scale: 1, opacity: 1 }}
+                                            exit={{ scale: 0.4, opacity: 0 }}
+                                            transition={{ type: 'spring', stiffness: 500, damping: 22 }}
+                                            style={styles.selectionCounterPill}
+                                        >
+                                            {selectedCvIds.length}
+                                        </motion.span>
+                                    </AnimatePresence>
+                                    <span>
+                                        de {cvs.length} selecionado{selectedCvIds.length !== 1 ? 's' : ''} para exportação
+                                    </span>
+                                </div>
+                                <span style={styles.selectionBarText}>
+                                    Pronto para exportação em lote (PDF Único compilado ou pacote .ZIP)
+                                </span>
+                            </div>
+                            <div style={styles.selectionBarRight}>
+                                <button 
+                                    style={styles.clearSelectionBtn}
+                                    onClick={() => setSelectedCvIds([])}
+                                >
+                                    Limpar Seleção
+                                </button>
+                                {selectedCvIds.length === 1 && (
+                                    <button
+                                        style={styles.exportPdfBtnInline}
+                                        onClick={() => {
+                                            const singleCv = cvs.find(c => c.id === selectedCvIds[0]);
+                                            if (singleCv) handleOpenExportPdfModal(singleCv);
+                                        }}
+                                        title="Visualizar e exportar o currículo selecionado em PDF Executivo Profissional"
+                                    >
+                                        <FileDown size={14} />
+                                        <span>Exportar PDF Individual</span>
+                                    </button>
+                                )}
+
+                                {/* Botões de Exportação em PDF Único (Arquivo Único) */}
+                                <button 
+                                    style={styles.exportBatchPdfBtnInline}
+                                    onClick={() => setShowBatchPdfModal(true)}
+                                    title="Configurar capa, ordem e exportar múltiplos currículos selecionados em arquivo PDF único"
                                 >
                                     <FileDown size={14} />
-                                    <span>Exportar PDF Executivo</span>
+                                    <span>Configurar PDF Único ({selectedCvIds.length})</span>
                                 </button>
-                            )}
-                            <button 
-                                style={styles.exportZipBtnInline}
-                                onClick={() => setShowBatchZipModal(true)}
-                                title="Configurar opções de empacotamento e exportar perfis selecionados em .zip"
-                            >
-                                <Archive size={14} />
-                                <span>Configurar .ZIP ({selectedCvIds.length})</span>
-                            </button>
-                            <button 
-                                style={styles.quickDownloadZipBtnInline}
-                                onClick={handleExportSelectedZip}
-                                disabled={isExportingZip}
-                                title="Baixar diretamente com 1 clique usando as configurações padrão"
-                            >
-                                {isExportingZip ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
-                                <span>Download Direto</span>
-                            </button>
-                        </div>
-                    </div>
-                )}
+                                <button 
+                                    style={styles.quickDownloadBatchPdfBtnInline}
+                                    onClick={handleQuickDownloadBatchPdf}
+                                    disabled={isExportingBatchPdf}
+                                    title="Baixar diretamente com 1 clique o PDF único com todos os currículos selecionados"
+                                >
+                                    {isExportingBatchPdf ? <Loader2 size={13} className="animate-spin" /> : <Download size={13} />}
+                                    <span>Baixar PDF Único</span>
+                                </button>
+
+                                {/* Botões do Pacote ZIP */}
+                                <button 
+                                    style={styles.exportZipBtnInline}
+                                    onClick={() => setShowBatchZipModal(true)}
+                                    title="Configurar opções de empacotamento e exportar perfis selecionados em .zip"
+                                >
+                                    <Archive size={14} />
+                                    <span>Pacote .ZIP</span>
+                                </button>
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
                 {/* Search & Filter Bar for Resumes */}
                 {cvs.length > 2 && (
@@ -1366,34 +1501,163 @@ FORMAÇÃO ACADÊMICA
                         {displayedCvs.map(cv => {
                             const isSelected = selectedCvIds.includes(cv.id);
                             return (
-                                <li 
+                                <motion.li 
                                     key={cv.id} 
-                                    style={{
-                                        ...styles.listItem,
-                                        border: isSelected 
-                                            ? `2px solid ${colors.primary}` 
-                                            : `1px solid ${colors.border}`,
+                                    layout
+                                    initial={{ opacity: 0, y: 14 }}
+                                    animate={{
+                                        opacity: 1,
+                                        y: 0,
+                                        scale: isSelected ? 1.01 : 1,
+                                        borderColor: isSelected 
+                                            ? colors.primary 
+                                            : colors.border,
+                                        boxShadow: isSelected 
+                                            ? `0 12px 30px -4px rgba(136, 19, 55, 0.22), 0 0 0 2.5px ${colors.primary}` 
+                                            : (colors.shadowSm || '0 2px 8px rgba(0,0,0,0.04)'),
                                         backgroundColor: isSelected 
-                                            ? (colors.primaryLight || colors.surface) 
+                                            ? (colors.primaryLight || 'rgba(136, 19, 55, 0.06)') 
                                             : colors.surface
                                     }}
+                                    whileHover={{
+                                        scale: isSelected ? 1.014 : 1.004,
+                                        boxShadow: isSelected 
+                                            ? `0 16px 36px -4px rgba(136, 19, 55, 0.32), 0 0 0 3px ${colors.primary}` 
+                                            : '0 6px 18px -3px rgba(0,0,0,0.08)'
+                                    }}
+                                    transition={{
+                                        duration: 0.24,
+                                        ease: [0.16, 1, 0.3, 1]
+                                    }}
+                                    style={{
+                                        ...styles.listItem,
+                                        position: 'relative',
+                                        overflow: 'hidden',
+                                        borderWidth: isSelected ? '2px' : '1px',
+                                        borderStyle: 'solid'
+                                    }}
                                 >
+                                    {/* Destaque Visual de Borda Selecionada Lateral com Animação Fluida */}
+                                    <AnimatePresence>
+                                        {isSelected && (
+                                            <motion.div
+                                                key={`selected-stripe-${cv.id}`}
+                                                initial={{ scaleY: 0, opacity: 0 }}
+                                                animate={{ scaleY: 1, opacity: 1 }}
+                                                exit={{ scaleY: 0, opacity: 0 }}
+                                                transition={{ type: 'spring', stiffness: 500, damping: 28 }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    bottom: 0,
+                                                    left: 0,
+                                                    width: '6px',
+                                                    background: `linear-gradient(180deg, ${colors.primary} 0%, ${colors.primaryHover || '#be123c'} 100%)`,
+                                                    zIndex: 4,
+                                                    borderRadius: '12px 0 0 12px',
+                                                    boxShadow: `0 0 12px ${colors.primary}80`
+                                                }}
+                                            />
+                                        )}
+                                    </AnimatePresence>
+
+                                    {/* Destaque Visual de Borda Selecionada Pulsante */}
+                                    <AnimatePresence>
+                                        {isSelected && (
+                                            <motion.div
+                                                key={`selected-glow-border-${cv.id}`}
+                                                initial={{ opacity: 0 }}
+                                                animate={{ opacity: [0.35, 0.8, 0.35] }}
+                                                exit={{ opacity: 0 }}
+                                                transition={{ repeat: Infinity, duration: 2.8, ease: 'easeInOut' }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    inset: 0,
+                                                    borderRadius: '10px',
+                                                    border: `1.5px solid ${colors.primary}`,
+                                                    pointerEvents: 'none',
+                                                    zIndex: 1,
+                                                    boxShadow: `inset 0 0 14px ${colors.primary}18`
+                                                }}
+                                            />
+                                        )}
+                                    </AnimatePresence>
+
+                                    {/* Destaque Visual / Ribbon de Borda Selecionada */}
+                                    <AnimatePresence>
+                                        {isSelected && (
+                                            <motion.div
+                                                key={`selected-ribbon-${cv.id}`}
+                                                initial={{ opacity: 0, y: -14, scale: 0.85 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: -14, scale: 0.85 }}
+                                                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+                                                style={{
+                                                    position: 'absolute',
+                                                    top: 0,
+                                                    right: 0,
+                                                    backgroundColor: colors.primary,
+                                                    color: '#ffffff',
+                                                    fontSize: '10px',
+                                                    fontWeight: 800,
+                                                    padding: '3px 12px',
+                                                    borderBottomLeftRadius: '10px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '5px',
+                                                    boxShadow: '0 2px 8px rgba(136, 19, 55, 0.35)',
+                                                    zIndex: 2,
+                                                    letterSpacing: '0.4px',
+                                                    textTransform: 'uppercase'
+                                                }}
+                                            >
+                                                <motion.div
+                                                    initial={{ scale: 0, rotate: -35 }}
+                                                    animate={{ scale: 1, rotate: 0 }}
+                                                    transition={{ delay: 0.05, type: 'spring', stiffness: 600, damping: 20 }}
+                                                >
+                                                    <CheckCircle2 size={11} />
+                                                </motion.div>
+                                                <span>Selecionado para Exportação</span>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                     <div style={styles.listItemHeader}>
                                         <div style={styles.listItemInfoGroup}>
-                                            {/* Selection Checkbox */}
-                                            <button 
+                                            {/* Selection Checkbox com Animação Fluida */}
+                                            <motion.button 
                                                 type="button"
+                                                whileHover={{ scale: 1.15 }}
+                                                whileTap={{ scale: 0.88 }}
                                                 onClick={() => handleToggleSelectCv(cv.id)} 
                                                 style={styles.checkboxBtn}
-                                                title={isSelected ? "Desmarcar este currículo" : "Selecionar para exportar em .ZIP"}
+                                                title={isSelected ? "Desmarcar este currículo" : "Selecionar para exportar em PDF Único ou .ZIP"}
                                                 aria-label={`Selecionar ${cv.name}`}
                                             >
-                                                {isSelected ? (
-                                                    <CheckSquare size={20} color={colors.primary} />
-                                                ) : (
-                                                    <Square size={20} color={colors.textSecondary} />
-                                                )}
-                                            </button>
+                                                <AnimatePresence mode="wait" initial={false}>
+                                                    {isSelected ? (
+                                                        <motion.div
+                                                            key="checked"
+                                                            initial={{ scale: 0.4, rotate: -25 }}
+                                                            animate={{ scale: 1, rotate: 0 }}
+                                                            exit={{ scale: 0.4, rotate: 25 }}
+                                                            transition={{ type: 'spring', stiffness: 600, damping: 22 }}
+                                                        >
+                                                            <CheckSquare size={20} color={colors.primary} />
+                                                        </motion.div>
+                                                    ) : (
+                                                        <motion.div
+                                                            key="unchecked"
+                                                            initial={{ scale: 0.8 }}
+                                                            animate={{ scale: 1 }}
+                                                            exit={{ scale: 0.8 }}
+                                                            transition={{ duration: 0.12 }}
+                                                        >
+                                                            <Square size={20} color={colors.textSecondary} />
+                                                        </motion.div>
+                                                    )}
+                                                </AnimatePresence>
+                                            </motion.button>
 
                                             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                                                 <strong style={styles.cvName}>{cv.name}</strong>
@@ -1644,7 +1908,7 @@ FORMAÇÃO ACADÊMICA
                                             </ReactMarkdown>
                                         </div>
                                     )}
-                                </li>
+                                </motion.li>
                             );
                         })}
                     </ul>
@@ -1679,6 +1943,17 @@ FORMAÇÃO ACADÊMICA
                 }}
                 cv={pdfExportCv}
                 analysis={pdfExportCv ? analysisResults[pdfExportCv.id] : undefined}
+                colors={colors}
+                onShowToast={(msg) => setToastMessage(msg)}
+            />
+
+            {/* Modal de Exportação em Lote de Currículos em Arquivo PDF Único */}
+            <CVBatchPdfExportModal
+                isOpen={showBatchPdfModal}
+                onClose={() => setShowBatchPdfModal(false)}
+                cvs={cvs}
+                analysisResults={analysisResults}
+                initialSelectedIds={selectedCvIds.length > 0 ? selectedCvIds : cvs.map(c => c.id)}
                 colors={colors}
                 onShowToast={(msg) => setToastMessage(msg)}
             />
@@ -2115,6 +2390,63 @@ const getStyles = (colors: any): { [key: string]: React.CSSProperties } => ({
         cursor: 'pointer',
         transition: 'all 0.15s ease',
     },
+    exportBatchPdfBtn: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '9px 18px',
+        fontSize: '13px',
+        fontWeight: 700,
+        color: '#ffffff',
+        background: 'linear-gradient(135deg, #881337 0%, #be123c 100%)',
+        border: 'none',
+        borderRadius: '8px',
+        cursor: 'pointer',
+        boxShadow: '0 2px 10px rgba(136, 19, 55, 0.35)',
+        transition: 'all 0.18s ease',
+    },
+    exportBatchPdfBtnDisabled: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        padding: '9px 18px',
+        fontSize: '13px',
+        fontWeight: 600,
+        color: colors.buttonDisabledText,
+        backgroundColor: colors.buttonDisabledBg,
+        border: `1px solid ${colors.border}`,
+        borderRadius: '8px',
+        cursor: 'not-allowed',
+        opacity: 0.6,
+    },
+    exportBatchPdfBtnInline: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '7px 14px',
+        fontSize: '12px',
+        fontWeight: 700,
+        color: '#ffffff',
+        background: 'linear-gradient(135deg, #881337 0%, #be123c 100%)',
+        border: 'none',
+        borderRadius: '6px',
+        cursor: 'pointer',
+        boxShadow: '0 2px 8px rgba(136, 19, 55, 0.25)',
+    },
+    quickDownloadBatchPdfBtnInline: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '5px',
+        padding: '7px 13px',
+        fontSize: '12px',
+        fontWeight: 700,
+        color: colors.primary,
+        backgroundColor: colors.surface,
+        border: `1.5px solid ${colors.primary}`,
+        borderRadius: '6px',
+        cursor: 'pointer',
+        transition: 'all 0.15s ease',
+    },
     exportZipBtn: {
         display: 'flex',
         alignItems: 'center',
@@ -2205,13 +2537,80 @@ const getStyles = (colors: any): { [key: string]: React.CSSProperties } => ({
         flexWrap: 'wrap',
     },
     selectionBadge: {
-        backgroundColor: colors.primary,
-        color: colors.textOnPrimary,
+        backgroundColor: colors.surface,
+        border: `1px solid ${colors.borderFocus || '#881337'}`,
+        color: colors.textPrimary,
         padding: '3px 10px',
         borderRadius: '12px',
         fontSize: '12px',
+        fontWeight: 700,
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    },
+    actionBtnCountBadge: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: '20px',
+        height: '20px',
+        padding: '0 6px',
+        borderRadius: '10px',
+        backgroundColor: '#ffffff',
+        color: colors.primary || '#881337',
+        fontSize: '11px',
         fontWeight: 800,
-        letterSpacing: '0.02em',
+        boxShadow: '0 2px 5px rgba(0,0,0,0.2)',
+        marginLeft: '6px'
+    },
+    selectionCounterPill: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: '22px',
+        height: '22px',
+        padding: '0 6px',
+        borderRadius: '11px',
+        backgroundColor: colors.primary || '#881337',
+        color: '#ffffff',
+        fontSize: '11.5px',
+        fontWeight: 800,
+        marginRight: '6px',
+        boxShadow: '0 2px 6px rgba(136, 19, 55, 0.35)'
+    },
+    actionBarSelectionIndicator: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '6px',
+        padding: '6px 12px',
+        backgroundColor: colors.primaryLight || 'rgba(136, 19, 55, 0.08)',
+        border: `1.5px solid ${colors.primary}`,
+        borderRadius: '20px',
+        fontSize: '12px',
+        fontWeight: 700,
+        color: colors.primary,
+        boxShadow: '0 2px 8px rgba(136, 19, 55, 0.15)',
+    },
+    actionBarCountPill: {
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minWidth: '20px',
+        height: '20px',
+        padding: '0 6px',
+        borderRadius: '10px',
+        backgroundColor: colors.primary,
+        color: '#ffffff',
+        fontSize: '11px',
+        fontWeight: 800,
+        boxShadow: '0 2px 5px rgba(136, 19, 55, 0.3)',
+    },
+    actionBarCountText: {
+        fontSize: '12px',
+        fontWeight: 700,
+        color: colors.primary,
+        whiteSpace: 'nowrap',
     },
     selectionBarText: {
         fontSize: '13px',

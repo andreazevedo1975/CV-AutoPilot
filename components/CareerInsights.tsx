@@ -17,7 +17,7 @@ import {
   ReferenceLine
 } from 'recharts';
 import { Application, ApplicationStatus, CareerStrategyAnalysisResult, CV } from '../types';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { analyzeRejectionPatternsAndStrategy } from '../services/geminiService';
 import {

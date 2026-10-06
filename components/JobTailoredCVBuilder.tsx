@@ -1,6 +1,6 @@
 // Senior Executive CV Architecture - Job Tailored CV Builder & ATS Master
 import React, { useState, useContext, useEffect, useRef } from 'react';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { 
   CV, 

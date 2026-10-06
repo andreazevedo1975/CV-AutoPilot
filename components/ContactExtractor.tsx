@@ -1,6 +1,6 @@
 // components/ContactExtractor.tsx - Extrator de Contatos & Dossiê de Candidatura de CV
 import React, { useState, useContext, useMemo, useRef } from 'react';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { 
   ExtractedCVContact, 

@@ -25,7 +25,7 @@ import {
   Minus,
   FileSpreadsheet
 } from 'lucide-react';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { Application, SalaryBenchmarkResult, SenioritySalaryTier } from '../types';
 import { analyzeSalaryBenchmark } from '../services/geminiService';

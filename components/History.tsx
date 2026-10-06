@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { HistoryItem, GenerationHistoryItem, CV, Application } from '../types';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { CareerDossierPdfModal } from './CareerDossierPdfModal';
 import { OfflineDocumentsModal } from './OfflineDocumentsModal';
 import { useOfflineDocuments } from '../hooks/useOfflineDocuments';

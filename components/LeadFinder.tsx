@@ -20,6 +20,7 @@ import {
     calculateRegionalJobHeatmap,
     fetchCityNeighborhoodsLive 
 } from '../services/geminiService';
+import { buildRealPortalQueryLinks } from '../services/realSearch360Service';
 import { 
     BRAZIL_STATES, 
     getCitiesByState, 
@@ -30,7 +31,7 @@ import { JobRegionalHeatmap } from './JobRegionalHeatmap';
 import { JobTailoredCVBuilder } from './JobTailoredCVBuilder';
 import { JobMatchAnalyzer } from './JobMatchAnalyzer';
 import { SearchableSelectDropdown } from './SearchableSelectDropdown';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { 
     SearchIcon, 
     MapPinIcon, 
@@ -849,6 +850,72 @@ const LeadFinder: React.FC = () => {
                             </button>
                         </div>
 
+                        {/* PAINEL DE VARREDURA 360° EM FONTES REAIS DE TALENTOS (SEM USO DE API) */}
+                        <div style={{
+                            marginTop: '20px',
+                            padding: '16px 20px',
+                            borderRadius: '12px',
+                            backgroundColor: colors.surface,
+                            border: `1px solid ${colors.border}`,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '13px', fontWeight: '800', color: colors.textPrimary, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <Sparkles style={{ width: '15px', height: '15px', color: '#10b981' }} />
+                                        Varredura 360° em Fontes Reais • Sem Uso de API
+                                    </span>
+                                    <span style={{
+                                        fontSize: '10.5px',
+                                        fontWeight: '800',
+                                        backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                                        color: '#10b981',
+                                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                                        padding: '2px 8px',
+                                        borderRadius: '12px',
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        100% Autônomo & Dados Reais
+                                    </span>
+                                </div>
+                                <span style={{ fontSize: '11.5px', color: colors.textSecondary }}>
+                                    Acesso direto a perfis e currículos reais nos portais oficiais com 1 clique
+                                </span>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
+                                {buildRealPortalQueryLinks(candKeyword || 'Desenvolvedor', candCity || 'São Paulo', candState || 'SP').slice(0, 6).map(link => (
+                                    <a
+                                        key={link.id}
+                                        href={link.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '8px 12px',
+                                            borderRadius: '8px',
+                                            backgroundColor: colors.background,
+                                            border: `1px solid ${colors.border}`,
+                                            color: colors.textPrimary,
+                                            textDecoration: 'none',
+                                            fontSize: '12px',
+                                            fontWeight: '600',
+                                            transition: 'all 0.15s ease'
+                                        }}
+                                        title={link.description}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span>{link.iconTag}</span>
+                                            <span>{link.portalName.split(' ')[0]}</span>
+                                        </div>
+                                        <ExternalLinkIcon style={{ width: '13px', height: '13px', color: colors.primary }} />
+                                    </a>
+                                ))}
+                            </div>
+                        </div>
+
                         {candidateSearchError && (
                             <div style={styles.errorBanner}>{candidateSearchError}</div>
                         )}
@@ -1645,6 +1712,72 @@ const LeadFinder: React.FC = () => {
                                 <SearchIcon style={{ width: '18px', height: '18px', marginRight: '6px' }} />
                                 {isSearchingJobs ? 'Rastreando Portais de Emprego e Sites...' : 'Buscar Vagas Locais'}
                             </button>
+                        </div>
+
+                        {/* PAINEL DE VARREDURA 360° EM FONTES REAIS DE VAGAS (SEM USO DE API) */}
+                        <div style={{
+                            marginTop: '20px',
+                            padding: '16px 20px',
+                            borderRadius: '12px',
+                            backgroundColor: colors.surface,
+                            border: `1px solid ${colors.border}`,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.02)'
+                        }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '13px', fontWeight: '800', color: colors.textPrimary, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                        <Sparkles style={{ width: '15px', height: '15px', color: '#10b981' }} />
+                                        Varredura 360° em Fontes Reais • Sem Uso de API
+                                    </span>
+                                    <span style={{
+                                        fontSize: '10.5px',
+                                        fontWeight: '800',
+                                        backgroundColor: 'rgba(16, 185, 129, 0.12)',
+                                        color: '#10b981',
+                                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                                        padding: '2px 8px',
+                                        borderRadius: '12px',
+                                        textTransform: 'uppercase'
+                                    }}>
+                                        Empresas & Vagas Oficiais
+                                    </span>
+                                </div>
+                                <span style={{ fontSize: '11.5px', color: colors.textSecondary }}>
+                                    Consulta ao vivo com 1 clique nas páginas de vagas de cada portal
+                                </span>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '8px' }}>
+                                {buildRealPortalQueryLinks(jobKeyword || 'Desenvolvedor', jobCity || 'São Paulo', jobState || 'SP').slice(0, 8).map(link => (
+                                    <a
+                                        key={link.id}
+                                        href={link.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '8px 12px',
+                                            borderRadius: '8px',
+                                            backgroundColor: colors.background,
+                                            border: `1px solid ${colors.border}`,
+                                            color: colors.textPrimary,
+                                            textDecoration: 'none',
+                                            fontSize: '12px',
+                                            fontWeight: '600',
+                                            transition: 'all 0.15s ease'
+                                        }}
+                                        title={link.description}
+                                    >
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span>{link.iconTag}</span>
+                                            <span>{link.portalName.split(' ')[0]}</span>
+                                        </div>
+                                        <ExternalLinkIcon style={{ width: '13px', height: '13px', color: colors.primary }} />
+                                    </a>
+                                ))}
+                            </div>
                         </div>
 
                         {jobSearchError && (

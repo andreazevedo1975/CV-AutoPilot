@@ -1,7 +1,7 @@
 // components/WindowsInstallerModal.tsx - Central de Instalação e Execução Local no Windows
 import React, { useState, useEffect, useContext } from 'react';
 import JSZip from 'jszip';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { 
   Download, 
   Check, 

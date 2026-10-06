@@ -26,7 +26,7 @@ import {
   User,
   Search
 } from 'lucide-react';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { 
   Application, 

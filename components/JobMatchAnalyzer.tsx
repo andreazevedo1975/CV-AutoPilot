@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { CV, JobMatchAnalysis, JobAdjustmentSuggestion, JobAlignmentKeyword } from '../types';
 import { analyzeJobAlignment } from '../services/geminiService';
-import { ThemeContext } from '../App';
+import { ThemeContext } from '../ThemeContext';
 import { 
   Sparkles, 
   Target, 
