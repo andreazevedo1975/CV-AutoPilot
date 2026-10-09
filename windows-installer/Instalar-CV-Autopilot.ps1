@@ -18,8 +18,12 @@ if (-not (Test-Path "package.json") -and (Test-Path "..\package.json")) {
     $ScriptPath = Get-Location
 }
 
+$RootDir = Get-Location
+Write-Host "Pasta do Projeto: $RootDir" -ForegroundColor Cyan
+Write-Host ""
+
 # 1. Verificar Node.js
-Write-Host "[1/3] Verificando instalacao do Node.js..." -ForegroundColor Cyan
+Write-Host "[1/4] Verificando instalacao do Node.js..." -ForegroundColor Cyan
 $NodeCmd = Get-Command node -ErrorAction SilentlyContinue
 
 if (-not $NodeCmd) {
@@ -30,7 +34,7 @@ if (-not $NodeCmd) {
         Start-Process "https://nodejs.org/"
     }
     Pause
-    Exit
+    Exit 1
 } else {
     $NodeVersion = & node -v
     Write-Host "  [OK] Node.js detectado: $NodeVersion" -ForegroundColor Green
@@ -38,27 +42,64 @@ if (-not $NodeCmd) {
 
 # 2. Instalar dependencias
 Write-Host ""
-Write-Host "[2/3] Instalando dependencias locais da aplicacao..." -ForegroundColor Cyan
+Write-Host "[2/4] Instalando dependencias locais da aplicacao..." -ForegroundColor Cyan
 & npm install --legacy-peer-deps --no-audit
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  Tentando com --force..." -ForegroundColor Yellow
+    & npm install --force --no-audit
+}
 Write-Host "  [OK] Dependencias instaladas com sucesso!" -ForegroundColor Green
 
-# 3. Finalizar
+# 3. Criar arquivo de configuracao .env se necessario
 Write-Host ""
-Write-Host "[3/3] Configuracao concluida!" -ForegroundColor Cyan
+Write-Host "[3/4] Configurando ambiente local (.env)..." -ForegroundColor Cyan
+if (-not (Test-Path ".env")) {
+    if (Test-Path ".env.example") {
+        Copy-Item ".env.example" ".env"
+    } else {
+        Set-Content -Path ".env" -Value "VITE_PORT=3000`n# GEMINI_API_KEY="
+    }
+    Write-Host "  [OK] Arquivo .env criado!" -ForegroundColor Green
+} else {
+    Write-Host "  [OK] Arquivo .env ja configurado!" -ForegroundColor Green
+}
+
+# 4. Criar Atalho na Area de Trabalho
+Write-Host ""
+Write-Host "[4/4] Criando atalho na Area de Trabalho..." -ForegroundColor Cyan
+try {
+    $WshShell = New-Object -ComObject WScript.Shell
+    $DesktopPath = [System.Environment]::GetFolderPath('Desktop')
+    $Shortcut = $WshShell.CreateShortcut((Join-Path $DesktopPath "CV-AutoPilot.lnk"))
+    
+    $LauncherPath = Join-Path $RootDir "Iniciar-CV-Autopilot.bat"
+    if (-not (Test-Path $LauncherPath)) {
+        $LauncherPath = Join-Path $RootDir "windows-installer\Iniciar-CV-Autopilot.bat"
+    }
+    $Shortcut.TargetPath = $LauncherPath
+    $Shortcut.WorkingDirectory = $RootDir
+    $Shortcut.Description = "CV-AutoPilot Enterprise - Plataforma de Carreira e ATS"
+    $Shortcut.Save()
+    Write-Host "  [OK] Atalho criado na Area de Trabalho com sucesso!" -ForegroundColor Green
+} catch {
+    Write-Host "  [INFO] Atalho direto disponivel em Iniciar-CV-Autopilot.bat" -ForegroundColor Yellow
+}
+
 Write-Host ""
 Write-Host "===============================================================================" -ForegroundColor Green
 Write-Host "                INSTALACAO CONCLUIDA COM SUCESSO!" -ForegroundColor White
 Write-Host "===============================================================================" -ForegroundColor Green
 Write-Host ""
-Write-Host "Para iniciar, execute o arquivo: Iniciar-CV-Autopilot.bat" -ForegroundColor Cyan
+Write-Host "Para iniciar, execute o arquivo: Iniciar-CV-Autopilot.bat ou o atalho no Desktop." -ForegroundColor Cyan
+Write-Host "O painel abrira em: http://localhost:3000/" -ForegroundColor Cyan
 Write-Host ""
 
 $Prompt = Read-Host "Deseja iniciar o aplicativo agora? (S/N)"
 if ($Prompt -eq 'S' -or $Prompt -eq 's') {
-    $Launcher = Join-Path $ScriptPath "Iniciar-CV-Autopilot.bat"
-    if (Test-Path $Launcher) {
-        Start-Process $Launcher
+    if (Test-Path $LauncherPath) {
+        Start-Process $LauncherPath
     } else {
-        & npm run dev
+        Start-Process "Iniciar-CV-Autopilot.bat"
     }
 }

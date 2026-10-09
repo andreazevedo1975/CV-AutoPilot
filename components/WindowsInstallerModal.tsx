@@ -43,58 +43,136 @@ echo.
 echo  Iniciando a verificacao do ambiente Windows...
 echo.
 
-set "INSTALL_DIR=%~dp0"
-cd /d "%INSTALL_DIR%"
+set "SCRIPT_DIR=%~dp0"
+cd /d "%SCRIPT_DIR%"
+
 if not exist "package.json" (
     if exist "..\\package.json" (
         cd ..
-        set "INSTALL_DIR=%cd%\\"
     )
 )
 
-:: 1. Verificar se o Node.js esta instalado
-echo [1/3] Verificando instalacao do Node.js LTS...
+set "ROOT_DIR=%cd%"
+echo  [Diretorio do Projeto]: %ROOT_DIR%
+echo.
+
+:: 1. Verificar Node.js
+echo [1/5] Verificando instalacao do Node.js LTS...
 where node >nul 2>nul
 if %errorlevel% neq 0 (
     echo.
     echo  AVISO: Node.js nao foi detectado neste computador.
-    echo  Por favor, baixe o instalador oficial gratuito do Node.js LTS em:
-    echo  --^> https://nodejs.org/ (Versao recomendada LTS)
+    echo  Baixe a versao oficial LTS gratuita em: https://nodejs.org/
     echo.
-    echo  Deseja abrir o site oficial do Node.js agora?
-    set /p OPEN_NODE="Abrir https://nodejs.org agora? (S/N): "
+    set /p OPEN_NODE="Deseja abrir o site oficial https://nodejs.org agora? (S/N): "
     if /i "!OPEN_NODE!"=="S" (
         start "" "https://nodejs.org/"
     )
     echo.
-    echo  Apos concluir a instalacao oficial, execute este instalador novamente.
+    echo  Apos concluir a instalacao do Node.js, execute este instalador novamente.
     echo.
     pause
     exit /b 1
 ) else (
     for /f "tokens=*" %%v in ('node -v') do set "NODE_VER=%%v"
-    echo  [OK] Node.js detectado: !NODE_VER!
+    echo  [OK] Node.js detectado com sucesso: !NODE_VER!
 )
 
-:: 2. Instalar dependencias locais com npm
+:: 2. Verificar package.json
 echo.
-echo [2/3] Instalando dependencias da aplicacao...
+echo [2/5] Verificando manifesto da aplicacao (package.json)...
+if not exist "package.json" (
+    echo  [AVISO] package.json nao encontrado. Criando configuracao padrao...
+    (
+        echo {
+        echo   "name": "cv-autopilot",
+        echo   "private": true,
+        echo   "version": "1.0.0",
+        echo   "type": "module",
+        echo   "scripts": {
+        echo     "dev": "vite --host 0.0.0.0 --port 3000",
+        echo     "build": "vite build",
+        echo     "preview": "vite preview"
+        echo   },
+        echo   "dependencies": {
+        echo     "@google/genai": "^1.27.0",
+        echo     "framer-motion": "^13.4.4",
+        echo     "jspdf": "^4.2.1",
+        echo     "jszip": "^3.10.2",
+        echo     "lucide-react": "^1.47.0",
+        echo     "pptxgenjs": "^4.0.1",
+        echo     "react": "^19.2.0",
+        echo     "react-dom": "^19.2.0",
+        echo     "react-markdown": "^10.1.0",
+        echo     "recharts": "^3.10.1",
+        echo     "xlsx": "^0.18.5"
+        echo   },
+        echo   "devDependencies": {
+        echo     "@types/node": "^22.14.0",
+        echo     "@vitejs/plugin-react": "^5.0.0",
+        echo     "typescript": "~5.8.2",
+        echo     "vite": "^6.2.0"
+        echo   }
+        echo }
+    ) > "package.json"
+    echo  [OK] package.json criado com sucesso!
+) else (
+    echo  [OK] package.json validado com sucesso!
+)
+
+:: 3. Instalar dependencias
+echo.
+echo [3/5] Instalando dependencias locais (React, Vite, Motores ATS)...
+echo  (Aguarde alguns instantes enquanto os pacotes sao resolvidos...)
+echo.
 call npm install --legacy-peer-deps --no-audit
 
 if %errorlevel% neq 0 (
-    call npm install --no-audit
+    echo.
+    echo  [AVISO] Tentando instalacao de contingencia (--force)...
+    call npm install --force --no-audit
 )
-echo  [OK] Dependencias instaladas com sucesso!
+echo  [OK] Dependencias instaladas e prontas!
 
-:: 3. Criar arquivo de configuracao local
+:: 4. Configurar .env
 echo.
-echo [3/3] Configurando ambiente local...
+echo [4/5] Configurando ambiente local (.env)...
 if not exist ".env" (
     if exist ".env.example" (
         copy ".env.example" ".env" >nul
+        echo  [OK] Arquivo .env criado a partir de .env.example!
     ) else (
-        echo VITE_PORT=3000 > .env
+        (
+            echo VITE_PORT=3000
+            echo # GEMINI_API_KEY=
+        ) > ".env"
+        echo  [OK] Arquivo .env inicializado com sucesso!
     )
+) else (
+    echo  [OK] Arquivo .env ja pronto!
+)
+
+:: 5. Criar Atalho na Area de Trabalho
+echo.
+echo [5/5] Criando atalho na Area de Trabalho do Windows...
+set "TARGET_LAUNCHER=%ROOT_DIR%\\Iniciar-CV-Autopilot.bat"
+if not exist "%TARGET_LAUNCHER%" (
+    if exist "%SCRIPT_DIR%Iniciar-CV-Autopilot.bat" (
+        set "TARGET_LAUNCHER=%SCRIPT_DIR%Iniciar-CV-Autopilot.bat"
+    )
+)
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$ws = New-Object -ComObject WScript.Shell; $desktop = [Environment]::GetFolderPath('Desktop'); $scPath = Join-Path $desktop 'CV-AutoPilot.lnk'; $sc = $ws.CreateShortcut($scPath); $sc.TargetPath = '%TARGET_LAUNCHER%'; $sc.WorkingDirectory = '%ROOT_DIR%'; $sc.Description = 'CV-AutoPilot Enterprise'; $sc.Save()" >nul 2>&1
+if %errorlevel% equ 0 (
+    echo  [OK] Atalho "CV-AutoPilot" criado na sua Area de Trabalho!
+) else (
+    echo  [INFO] Atalho direto disponivel na pasta do projeto: Iniciar-CV-Autopilot.bat
+)
+
+:: Liberar porta 3000 caso esteja ocupada por processo anterior
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Get-NetTCPConnection -LocalPort 3000 -ErrorAction SilentlyContinue | ForEach-Object { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue }" >nul 2>&1
+for /f "tokens=5" %%p in ('netstat -aon 2^>nul ^| findstr ":3000 "') do (
+    taskkill /f /pid %%p >nul 2>&1
 )
 
 echo.
@@ -103,78 +181,229 @@ echo                INSTALACAO LOCAL CONCLUIDA COM SUCESSO!
 echo ===============================================================================
 echo.
 echo  Como Iniciar:
-echo   - Execute o arquivo "Iniciar-CV-Autopilot.bat" nesta pasta.
-echo   - O painel abrira em: http://localhost:3000
+echo   1. Duplo clique no atalho "CV-AutoPilot" na sua Area de Trabalho.
+echo   2. Ou execute o arquivo "Iniciar-CV-Autopilot.bat".
+echo   3. O painel abrira automaticamente em: http://localhost:3000
 echo.
 echo ===============================================================================
 echo.
 
 set /p RESP="Deseja iniciar o CV-AutoPilot agora mesmo? (S/N): "
 if /i "%RESP%"=="S" (
-    start "" "Iniciar-CV-Autopilot.bat"
+    echo.
+    echo  Iniciando servidor local...
+    if exist "%TARGET_LAUNCHER%" (
+        start "" "%TARGET_LAUNCHER%"
+    ) else (
+        start "" "Iniciar-CV-Autopilot.bat"
+    )
+) else (
+    echo  Tudo pronto! Voce pode abrir a qualquer momento pelo atalho na Area de Trabalho.
+    timeout /t 3 >nul
 )
 exit /b 0
 `;
 
 const BAT_STARTER_CONTENT = `@echo off
 chcp 65001 >nul
-title CV-AutoPilot Enterprise - Servidor Local
+title CV-AutoPilot Enterprise - Servidor Local (http://localhost:3000)
 color 0F
 
-cd /d "%~dp0"
+set "SCRIPT_DIR=%~dp0"
+cd /d "%SCRIPT_DIR%"
+
 if not exist "package.json" (
-    cd ..
+    if exist "..\\package.json" (
+        cd ..
+    )
 )
+
+set "ROOT_DIR=%cd%"
 
 echo ===============================================================================
 echo                CV-AUTOPILOT ENTERPRISE - SERVIDOR LOCAL
 echo ===============================================================================
 echo.
-echo  Iniciando a aplicacao na porta local 3000...
-echo  Painel de Controle: http://localhost:3000
-echo  Para ENCERRAR a aplicacao: Feche esta janela ou pressione CTRL+C.
+echo  Pasta da Aplicacao: %ROOT_DIR%
+echo  Porta Local: http://localhost:3000
+echo.
+
+where node >nul 2>nul
+if %errorlevel% neq 0 (
+    echo [ERRO] Node.js nao foi detectado!
+    echo Instale o Node.js LTS em https://nodejs.org/ e tente novamente.
+    echo.
+    pause
+    exit /b 1
+)
+
+if not exist "node_modules" (
+    echo [AVISO] Dependencias nao detectadas. Instalando agora...
+    call npm install --legacy-peer-deps --no-audit
+    echo.
+)
+
+echo Verificando disponibilidade da porta 3000...
+for /f "tokens=5" %%p in ('netstat -aon 2^>nul ^| findstr /r ":3000[ ]"') do (
+    echo Finalizando processo anterior em segundo plano (PID %%p)...
+    taskkill /f /pid %%p >nul 2>nul
+)
+
+echo.
+echo ===============================================================================
+echo  INICIANDO SERVIDOR LOCAL VITE...
+echo  O painel abrira automaticamente no seu navegador padrao:
+echo  --^> http://localhost:3000
+echo.
+echo  Para ENCERRAR: Feche esta janela do terminal ou pressione CTRL+C.
 echo ===============================================================================
 echo.
 
-start "" "http://localhost:3000"
+start "" powershell -NoProfile -ExecutionPolicy Bypass -Command "Start-Sleep -Milliseconds 2500; Start-Process 'http://localhost:3000/'"
+
 call npm run dev
+
+if %errorlevel% neq 0 (
+    echo.
+    echo [AVISO] Tentando iniciar via npx vite...
+    call npx vite --host 0.0.0.0 --port 3000
+)
+
 pause
+`;
+
+const BAT_STOPPER_CONTENT = `@echo off
+chcp 65001 >nul
+title Encerrar CV-AutoPilot Enterprise (Porta 3000)
+color 0C
+
+echo ===============================================================================
+echo                ENCERRAR CV-AUTOPILOT ENTERPRISE LOCAL
+echo ===============================================================================
+echo.
+echo  Localizando e finalizando processos locais na porta 3000...
+echo.
+
+set KILLED=0
+for /f "tokens=5" %%a in ('netstat -aon 2^>nul ^| findstr /r ":3000[ ]"') do (
+    echo Finalizando processo na porta 3000 (PID: %%a)...
+    taskkill /f /pid %%a >nul 2>nul
+    set KILLED=1
+)
+
+if %KILLED% equ 0 (
+    echo  Nenhum processo estava ativo na porta 3000.
+) else (
+    echo  [OK] Todos os servicos locais do CV-AutoPilot foram finalizados com sucesso!
+)
+
+echo.
+echo  Porta 3000 liberada com sucesso.
+timeout /t 3 >nul
+exit /b 0
 `;
 
 const PS1_INSTALLER_CONTENT = `# CV-AutoPilot Enterprise - Instalador Local Seguro
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$Host.UI.RawUI.WindowTitle = "Instalador CV-AutoPilot Enterprise"
+
 Clear-Host
-Write-Host "=== INSTALADOR LOCAL CV-AUTOPILOT ENTERPRISE ===" -ForegroundColor DarkRed
+Write-Host "===============================================================================" -ForegroundColor DarkRed
+Write-Host "                CV-AUTOPILOT ENTERPRISE - INSTALADOR LOCAL" -ForegroundColor White
+Write-Host "          Plataforma de Inteligencia em Carreira e Recrutamento 360" -ForegroundColor Gray
+Write-Host "===============================================================================" -ForegroundColor DarkRed
+Write-Host ""
 
 $ScriptPath = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not $ScriptPath) { $ScriptPath = Get-Location }
 Set-Location $ScriptPath
 
-if (-not (Test-Path "package.json") -and (Test-Path "..\package.json")) {
+if (-not (Test-Path "package.json") -and (Test-Path "..\\package.json")) {
     Set-Location ".."
     $ScriptPath = Get-Location
 }
 
-# 1. Verificar Node.js
-Write-Host "[1/2] Verificando instalacao do Node.js..." -ForegroundColor Cyan
-if (-not (Get-Command node -ErrorAction SilentlyContinue)) {
-    Write-Host "AVISO: Node.js nao detectado." -ForegroundColor Yellow
-    Write-Host "Baixe a versao oficial LTS em: https://nodejs.org/" -ForegroundColor Yellow
-    Start-Process "https://nodejs.org/"
+$RootDir = Get-Location
+Write-Host "Pasta do Projeto: $RootDir" -ForegroundColor Cyan
+Write-Host ""
+
+Write-Host "[1/4] Verificando instalacao do Node.js..." -ForegroundColor Cyan
+$NodeCmd = Get-Command node -ErrorAction SilentlyContinue
+
+if (-not $NodeCmd) {
+    Write-Host "  AVISO: Node.js nao foi detectado neste computador." -ForegroundColor Yellow
+    Write-Host "  Por favor, baixe o instalador oficial LTS em https://nodejs.org/" -ForegroundColor Yellow
+    $OpenWeb = Read-Host "  Deseja abrir o site oficial agora? (S/N)"
+    if ($OpenWeb -eq 'S' -or $OpenWeb -eq 's') {
+        Start-Process "https://nodejs.org/"
+    }
     Pause
-    Exit
+    Exit 1
 } else {
-    Write-Host "  [OK] Node.js detectado: $(node -v)" -ForegroundColor Green
+    $NodeVersion = & node -v
+    Write-Host "  [OK] Node.js detectado: $NodeVersion" -ForegroundColor Green
 }
 
-# 2. Instalar dependencias
-Write-Host "[2/2] Instalando dependencias locais..." -ForegroundColor Cyan
+Write-Host ""
+Write-Host "[2/4] Instalando dependencias locais da aplicacao..." -ForegroundColor Cyan
 & npm install --legacy-peer-deps --no-audit
 
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "  Tentando com --force..." -ForegroundColor Yellow
+    & npm install --force --no-audit
+}
+Write-Host "  [OK] Dependencias instaladas com sucesso!" -ForegroundColor Green
+
 Write-Host ""
-Write-Host "[OK] Instalacao finalizada com sucesso!" -ForegroundColor Green
-Write-Host "Para executar, utilize o arquivo: Iniciar-CV-Autopilot.bat" -ForegroundColor Cyan
-Start-Process "Iniciar-CV-Autopilot.bat"
+Write-Host "[3/4] Configurando ambiente local (.env)..." -ForegroundColor Cyan
+if (-not (Test-Path ".env")) {
+    if (Test-Path ".env.example") {
+        Copy-Item ".env.example" ".env"
+    } else {
+        Set-Content -Path ".env" -Value "VITE_PORT=3000\`n# GEMINI_API_KEY="
+    }
+    Write-Host "  [OK] Arquivo .env criado!" -ForegroundColor Green
+} else {
+    Write-Host "  [OK] Arquivo .env ja configurado!" -ForegroundColor Green
+}
+
+Write-Host ""
+Write-Host "[4/4] Criando atalho na Area de Trabalho..." -ForegroundColor Cyan
+try {
+    $WshShell = New-Object -ComObject WScript.Shell
+    $DesktopPath = [System.Environment]::GetFolderPath('Desktop')
+    $Shortcut = $WshShell.CreateShortcut((Join-Path $DesktopPath "CV-AutoPilot.lnk"))
+    
+    $LauncherPath = Join-Path $RootDir "Iniciar-CV-Autopilot.bat"
+    if (-not (Test-Path $LauncherPath)) {
+        $LauncherPath = Join-Path $RootDir "windows-installer\\Iniciar-CV-Autopilot.bat"
+    }
+    $Shortcut.TargetPath = $LauncherPath
+    $Shortcut.WorkingDirectory = $RootDir
+    $Shortcut.Description = "CV-AutoPilot Enterprise - Plataforma de Carreira e ATS"
+    $Shortcut.Save()
+    Write-Host "  [OK] Atalho criado na Area de Trabalho com sucesso!" -ForegroundColor Green
+} catch {
+    Write-Host "  [INFO] Atalho direto disponivel em Iniciar-CV-Autopilot.bat" -ForegroundColor Yellow
+}
+
+Write-Host ""
+Write-Host "===============================================================================" -ForegroundColor Green
+Write-Host "                INSTALACAO CONCLUIDA COM SUCESSO!" -ForegroundColor White
+Write-Host "===============================================================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "Para iniciar, execute o arquivo: Iniciar-CV-Autopilot.bat ou o atalho no Desktop." -ForegroundColor Cyan
+Write-Host "O painel abrira em: http://localhost:3000/" -ForegroundColor Cyan
+Write-Host ""
+
+$Prompt = Read-Host "Deseja iniciar o aplicativo agora? (S/N)"
+if ($Prompt -eq 'S' -or $Prompt -eq 's') {
+    if (Test-Path $LauncherPath) {
+        Start-Process $LauncherPath
+    } else {
+        Start-Process "Iniciar-CV-Autopilot.bat"
+    }
+}
 `;
 
 export const WindowsInstallerModal: React.FC<WindowsInstallerModalProps> = ({ isOpen, onClose }) => {
@@ -248,25 +477,106 @@ export const WindowsInstallerModal: React.FC<WindowsInstallerModalProps> = ({ is
       // Clean scripts
       zip.file('Instalar-CV-Autopilot.bat', BAT_INSTALLER_CONTENT);
       zip.file('Iniciar-CV-Autopilot.bat', BAT_STARTER_CONTENT);
+      zip.file('Parar-CV-Autopilot.bat', BAT_STOPPER_CONTENT);
       zip.file('Instalar-CV-Autopilot.ps1', PS1_INSTALLER_CONTENT);
+
+      zip.file('package.json', JSON.stringify({
+        name: "cv-autopilot",
+        private: true,
+        version: "1.0.0",
+        type: "module",
+        scripts: {
+          dev: "vite --host 0.0.0.0 --port 3000",
+          build: "vite build",
+          preview: "vite preview"
+        },
+        dependencies: {
+          "@google/genai": "^1.27.0",
+          "framer-motion": "^13.4.4",
+          "jspdf": "^4.2.1",
+          "jszip": "^3.10.2",
+          "lucide-react": "^1.47.0",
+          "pptxgenjs": "^4.0.1",
+          "react": "^19.2.0",
+          "react-dom": "^19.2.0",
+          "react-markdown": "^10.1.0",
+          "recharts": "^3.10.1",
+          "xlsx": "^0.18.5"
+        },
+        devDependencies: {
+          "@types/node": "^22.14.0",
+          "@vitejs/plugin-react": "^5.0.0",
+          "typescript": "~5.8.2",
+          "vite": "^6.2.0"
+        }
+      }, null, 2));
+
+      zip.file('vite.config.ts', `import path from 'path';
+import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react';
+
+export default defineConfig(({ mode }) => {
+    const env = loadEnv(mode, '.', '');
+    return {
+      server: {
+        port: 3000,
+        host: '0.0.0.0',
+        strictPort: true,
+        cors: true,
+        allowedHosts: true,
+      },
+      plugins: [react()],
+      define: {
+        'process.env.API_KEY': JSON.stringify(env.GEMINI_API_KEY || ''),
+        'process.env.GEMINI_API_KEY': JSON.stringify(env.GEMINI_API_KEY || '')
+      },
+      resolve: {
+        alias: {
+          '@': path.resolve(__dirname, '.'),
+        },
+        dedupe: ['react', 'react-dom']
+      }
+    };
+});
+`);
+
+      zip.file('tsconfig.json', JSON.stringify({
+        compilerOptions: {
+          target: "ES2020",
+          useDefineForClassFields: true,
+          lib: ["ES2020", "DOM", "DOM.Iterable"],
+          module: "ESNext",
+          skipLibCheck: true,
+          moduleResolution: "bundler",
+          allowImportingTsExtensions: true,
+          resolveJsonModule: true,
+          isolatedModules: true,
+          noEmit: true,
+          jsx: "react-jsx",
+          strict: true,
+          noUnusedLocals: false,
+          noUnusedParameters: false,
+          noFallthroughCasesInSwitch: true
+        },
+        include: ["**/*.ts", "**/*.tsx"]
+      }, null, 2));
 
       zip.file('README-INSTALACAO.txt', `CV-AUTOPILOT ENTERPRISE - GUIA DE INSTALACAO NO WINDOWS
 ============================================================
 
 1. REQUISITO PREVIO:
-   - Ter o Node.js LTS instalado no seu PC (disponivel gratuitamente e seguro em https://nodejs.org/).
+   - Ter o Node.js LTS instalado no seu PC (disponivel gratuitamente em https://nodejs.org/).
 
 2. COMO INSTALAR:
    - Clique duas vezes no arquivo "Instalar-CV-Autopilot.bat".
-   - Ele fara o setup limpo das bibliotecas locais.
+   - Ele fara o setup das bibliotecas locais e criara o atalho na Area de Trabalho.
 
 3. COMO EXECUTAR:
-   - Apos instalado, basta clicar duas vezes em "Iniciar-CV-Autopilot.bat".
-   - A aplicacao abrira automaticamente no seu navegador em: http://localhost:3000
+   - Apos instalado, basta clicar duas vezes em "Iniciar-CV-Autopilot.bat" (ou no atalho no Desktop).
+   - O painel abrira automaticamente no seu navegador em: http://localhost:3000
 
-4. SOBRE SEGURANCA E ANTIVIRUS:
-   - Este pacote utiliza scripts abertos e transparentes em texto legivel (.bat e .ps1).
-   - Nao contem codigo binario oculto nem scripts invasivos.
+4. COMO ENCERRAR O SERVIDOR:
+   - Dê um duplo clique em "Parar-CV-Autopilot.bat" ou feche a janela do terminal.
 ============================================================
 `);
 

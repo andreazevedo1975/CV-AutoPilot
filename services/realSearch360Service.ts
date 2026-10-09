@@ -286,6 +286,276 @@ export const REAL_BRAZILIAN_COMPANIES: RealCompanyRecord[] = [
     atsPortal: 'Gupy',
     primaryHubs: ['Rio de Janeiro', 'São Paulo', 'Remoto / Home Office'],
     description: 'Maior grupo de comunicação da América Latina com alta demanda por engenharia de transmissão de vídeo ao vivo, CDN e recomendação algorítmica.'
+  },
+  {
+    name: 'BTG Pactual',
+    slug: 'btgpactual',
+    sector: 'Investment Banking & Wealth Management',
+    officialCareersUrl: 'https://www.btgpactual.com/carreiras',
+    recruitmentEmail: 'talentos@btgpactual.com',
+    atsPortal: 'Greenhouse',
+    primaryHubs: ['São Paulo', 'Rio de Janeiro', 'Remoto / Home Office'],
+    description: 'Maior banco de investimentos da América Latina, com forte cultura meritocrática e tecnologia de trading e wealth de ponta.'
+  },
+  {
+    name: 'B3 (Brasil, Bolsa, Balcão)',
+    slug: 'b3',
+    sector: 'Infraestrutura de Mercado Financeiro',
+    officialCareersUrl: 'https://b3.gupy.io/',
+    recruitmentEmail: 'recrutamento@b3.com.br',
+    atsPortal: 'Gupy',
+    primaryHubs: ['São Paulo', 'Remoto / Home Office'],
+    description: 'A bolsa de valores oficial do Brasil, operando infraestrutura crítica de negociação, custódia e liquidação de alta resiliência.'
+  },
+  {
+    name: 'Natura &Co',
+    slug: 'natura',
+    sector: 'Cosméticos, ESG & Omnicanalidade',
+    officialCareersUrl: 'https://natura.gupy.io/',
+    recruitmentEmail: 'carreiras@natura.net',
+    atsPortal: 'Gupy',
+    primaryHubs: ['São Paulo', 'Campinas', 'Cajamar', 'Remoto / Home Office'],
+    description: 'Líder multinacional brasileira em cosméticos com marcas globais e foco pioneiro em sustentabilidade e e-commerce direto.'
+  },
+  {
+    name: 'Localiza&Co',
+    slug: 'localiza',
+    sector: 'Mobilidade Urbana & Gestão de Frotas',
+    officialCareersUrl: 'https://localiza.gupy.io/',
+    recruitmentEmail: 'talentos@localiza.com',
+    atsPortal: 'Gupy',
+    primaryHubs: ['Belo Horizonte', 'São Paulo', 'Remoto / Home Office'],
+    description: 'Maior empresa de mobilidade da América Latina, investindo em IoT veicular, telemetria avançada e aplicativos móveis de aluguel.'
+  },
+  {
+    name: 'Suzano Papel e Celulose',
+    slug: 'suzano',
+    sector: 'Biolubrificantes, Celulose & Papel',
+    officialCareersUrl: 'https://suzano.gupy.io/',
+    recruitmentEmail: 'carreiras@suzano.com.br',
+    atsPortal: 'Gupy',
+    primaryHubs: ['São Paulo', 'Campinas', 'Salvador', 'Vitória'],
+    description: 'Maior produtora mundial de celulose de eucalipto, com avançadas iniciativas em biotecnologia e Indústria 4.0 automatizada.'
+  },
+  {
+    name: 'WEG Motores & Energia',
+    slug: 'weg',
+    sector: 'Equipamentos Elétricos, Motores & IA Industrial',
+    officialCareersUrl: 'https://weg.gupy.io/',
+    recruitmentEmail: 'recrutamento@weg.net',
+    atsPortal: 'Gupy',
+    primaryHubs: ['Jaraguá do Sul', 'Joinville', 'São Paulo', 'Campinas'],
+    description: 'Multinacional brasileira de altíssima rentabilidade líder em motores elétricos, automação industrial e transição energética.'
+  },
+  {
+    name: 'Gerdau',
+    slug: 'gerdau',
+    sector: 'Siderurgia & Aços Longos',
+    officialCareersUrl: 'https://gerdau.gupy.io/',
+    recruitmentEmail: 'carreiras@gerdau.com.br',
+    atsPortal: 'Gupy',
+    primaryHubs: ['São Paulo', 'Belo Horizonte', 'Porto Alegre', 'Rio de Janeiro'],
+    description: 'Maior recicladora de sucata e produtora de aço das Américas, com digitalização de usinas e sensoriamento inteligente.'
+  },
+  {
+    name: 'Raízen',
+    slug: 'raizen',
+    sector: 'Bioenergia, Etanol & Distribuição Shell',
+    officialCareersUrl: 'https://raizen.gupy.io/',
+    recruitmentEmail: 'talentos@raizen.com',
+    atsPortal: 'Gupy',
+    primaryHubs: ['Piracicaba', 'São Paulo', 'Campinas', 'Rio de Janeiro'],
+    description: 'Líder global em etanol de cana-de-açúcar e maior distribuidora de combustíveis com a rede de postos Shell no Brasil.'
+  },
+  {
+    name: 'Azul Linhas Aéreas',
+    slug: 'azul',
+    sector: 'Aviação Comercial & Logística Azul Cargo',
+    officialCareersUrl: 'https://azul.gupy.io/',
+    recruitmentEmail: 'carreiras@voeazul.com.br',
+    atsPortal: 'Gupy',
+    primaryHubs: ['Campinas', 'Barueri', 'São Paulo', 'Belo Horizonte'],
+    description: 'Maior companhia aérea do Brasil em número de voos diários e cidades atendidas, com forte operação em Campinas (Viracopos).'
+  },
+  {
+    name: 'PagBank (PagSeguro)',
+    slug: 'pagbank',
+    sector: 'Fintech, Adquirência & Conta Digital',
+    officialCareersUrl: 'https://pagseguro.gupy.io/',
+    recruitmentEmail: 'talentos@pagseguro.com',
+    atsPortal: 'Gupy',
+    primaryHubs: ['São Paulo', 'Campinas', 'Remoto / Home Office'],
+    description: 'Pioneira em maquininhas de cartão no Brasil com mais de 30 milhões de clientes no banco digital PagBank.'
+  },
+  {
+    name: 'Neon Pagamentos',
+    slug: 'neon',
+    sector: 'Banco Digital & Inclusão Financeira',
+    officialCareersUrl: 'https://neon.gupy.io/',
+    recruitmentEmail: 'carreiras@neon.com.br',
+    atsPortal: 'Gupy',
+    primaryHubs: ['São Paulo', 'Remoto / Home Office'],
+    description: 'Fintech brasileira focada na classe trabalhadora com contas digitais sem anuidade, cartão de crédito e crédito pessoal.'
+  },
+  {
+    name: 'Omie ERP',
+    slug: 'omie',
+    sector: 'SaaS de Gestão Financeira & PMEs',
+    officialCareersUrl: 'https://omie.gupy.io/',
+    recruitmentEmail: 'talentos@omie.com.br',
+    atsPortal: 'Gupy',
+    primaryHubs: ['São Paulo', 'Campinas', 'Belo Horizonte', 'Remoto / Home Office'],
+    description: 'Plataforma líder em ERP em nuvem para contadores e pequenas e médias empresas em todo o território nacional.'
+  },
+  {
+    name: 'Zup Innovation',
+    slug: 'zup',
+    sector: 'Plataformas Digitais & Open Source',
+    officialCareersUrl: 'https://zup.gupy.io/',
+    recruitmentEmail: 'talentos@zup.com.br',
+    atsPortal: 'Gupy',
+    primaryHubs: ['Uberlândia', 'São Paulo', 'Campinas', 'Remoto / Home Office'],
+    description: 'Empresa do grupo Itaú focada em aceleração digital, arquitetura de APIs, microsserviços e ferramentas de código aberto (Charles CD).'
+  },
+  {
+    name: 'Thoughtworks Brasil',
+    slug: 'thoughtworks',
+    sector: 'Consultoria Global de Software & Agilidade',
+    officialCareersUrl: 'https://www.thoughtworks.com/pt-br/careers',
+    recruitmentEmail: 'recrutamento-br@thoughtworks.com',
+    atsPortal: 'Greenhouse',
+    primaryHubs: ['Porto Alegre', 'São Paulo', 'Belo Horizonte', 'Recife', 'Remoto / Home Office'],
+    description: 'Referência mundial em boas práticas de engenharia de software (TDD, microfrontends, data mesh) e liderança de inclusão.'
+  },
+  {
+    name: 'IBM Brasil',
+    slug: 'ibm',
+    sector: 'Computação em Nuvem, IA Watson & Consultoria',
+    officialCareersUrl: 'https://www.ibm.com/br-pt/employment/',
+    recruitmentEmail: 'carreiras@br.ibm.com',
+    atsPortal: 'Workday',
+    primaryHubs: ['São Paulo', 'Hortolândia', 'Rio de Janeiro', 'Brasília'],
+    description: 'Mais de 100 anos no Brasil liderando infraestrutura bancária, servidores mainframe, computação quântica e nuvem híbrida (Red Hat).'
+  },
+  {
+    name: 'Microsoft Brasil',
+    slug: 'microsoft',
+    sector: 'Big Tech, Nuvem Azure, Copilot & Produtividade',
+    officialCareersUrl: 'https://careers.microsoft.com/v2/global/en/home.html',
+    recruitmentEmail: 'carreiras-brasil@microsoft.com',
+    atsPortal: 'Workday',
+    primaryHubs: ['São Paulo', 'Rio de Janeiro', 'Brasília', 'Remoto / Home Office'],
+    description: 'Líder global em computação em nuvem corporativa (Azure), soluções de inteligência artificial generativa e enterprise software.'
+  },
+  {
+    name: 'Google Brasil',
+    slug: 'google',
+    sector: 'Busca, Nuvem GCP, Android & IA Gemini',
+    officialCareersUrl: 'https://www.google.com/about/careers/applications/jobs/results/',
+    recruitmentEmail: 'google-brasil-careers@google.com',
+    atsPortal: 'Greenhouse',
+    primaryHubs: ['São Paulo', 'Belo Horizonte', 'Remoto / Home Office'],
+    description: 'Centro de engenharia pioneiro em Belo Horizonte e sede em São Paulo desenvolvendo produtos de alcance planetário.'
+  },
+  {
+    name: 'Amazon & AWS Brasil',
+    slug: 'amazon',
+    sector: 'Cloud Computing (AWS), E-commerce & Logística',
+    officialCareersUrl: 'https://www.amazon.jobs/pt',
+    recruitmentEmail: 'aws-recrutamento@amazon.com',
+    atsPortal: 'Workday',
+    primaryHubs: ['São Paulo', 'Barueri', 'Cajamar', 'Rio de Janeiro', 'Remoto / Home Office'],
+    description: 'Líder mundial em infraestrutura de nuvem pública (AWS) com datacenters no Brasil e ampla malha logística própria.'
+  },
+  {
+    name: 'Oracle do Brasil',
+    slug: 'oracle',
+    sector: 'Bancos de Dados, ERP Cloud & OCI',
+    officialCareersUrl: 'https://www.oracle.com/br/corporate/careers/',
+    recruitmentEmail: 'talentos-brasil@oracle.com',
+    atsPortal: 'Workday',
+    primaryHubs: ['São Paulo', 'Campinas', 'Brasília', 'Remoto / Home Office'],
+    description: 'Gigante mundial de banco de dados corporativo, aplicações de gestão e rápida expansão de sua nuvem OCI no mercado nacional.'
+  },
+  {
+    name: 'SAP Brasil',
+    slug: 'sap',
+    sector: 'ERP Corporativo, S/4HANA & Nuvem',
+    officialCareersUrl: 'https://www.sap.com/brazil/about/careers.html',
+    recruitmentEmail: 'carreiras-brasil@sap.com',
+    atsPortal: 'Workday',
+    primaryHubs: ['São Leopoldo', 'São Paulo', 'Rio de Janeiro', 'Remoto / Home Office'],
+    description: 'Líder global em software de gestão empresarial com laboratório de inovação em São Leopoldo (RS) e operações em São Paulo.'
+  },
+  {
+    name: 'Dell Technologies Brasil',
+    slug: 'dell',
+    sector: 'Hardware, Servidores & Soluções de TI',
+    officialCareersUrl: 'https://jobs.dell.com/brazil',
+    recruitmentEmail: 'carreiras-brasil@dell.com',
+    atsPortal: 'Workday',
+    primaryHubs: ['Eldorado do Sul', 'Porto Alegre', 'São Paulo', 'Hortolândia'],
+    description: 'Centro de desenvolvimento global no Rio Grande do Sul e fábrica em Hortolândia provendo infraestrutura de servidores e PCs.'
+  },
+  {
+    name: 'Accenture Brasil',
+    slug: 'accenture',
+    sector: 'Consultoria Estratégica & Engenharia Digital',
+    officialCareersUrl: 'https://www.accenture.com/br-pt/careers',
+    recruitmentEmail: 'recrutamento@accenture.com',
+    atsPortal: 'Workday',
+    primaryHubs: ['São Paulo', 'Recife (Porto Digital)', 'Rio de Janeiro', 'Belo Horizonte', 'Curitiba'],
+    description: 'Maior consultoria de tecnologia do mundo com centro de excelência em inovação no Porto Digital em Recife e presença nacional.'
+  },
+  {
+    name: 'Deloitte Brasil',
+    slug: 'deloitte',
+    sector: 'Auditoria, Consultoria & Cibersegurança',
+    officialCareersUrl: 'https://deloitte.gupy.io/',
+    recruitmentEmail: 'talentos@deloitte.com.br',
+    atsPortal: 'Gupy',
+    primaryHubs: ['São Paulo', 'Rio de Janeiro', 'Campinas', 'Belo Horizonte', 'Brasília', 'Curitiba', 'Porto Alegre', 'Recife'],
+    description: 'Líder das Big Four em auditoria, consultoria tributária, estratégia de tecnologia e transformação empresarial no Brasil.'
+  },
+  {
+    name: 'Porto Seguro',
+    slug: 'portoseguro',
+    sector: 'Seguros, Saúde, Cartões & Assistência',
+    officialCareersUrl: 'https://portoseguro.gupy.io/',
+    recruitmentEmail: 'talentos@portoseguro.com.br',
+    atsPortal: 'Gupy',
+    primaryHubs: ['São Paulo', 'Rio de Janeiro', 'Campinas', 'Remoto / Home Office'],
+    description: 'Sinônimo de excelência em seguros e serviços no Brasil, com acelerada digitalização de canais de autoatendimento e telemedicina.'
+  },
+  {
+    name: 'Banco Bradesco',
+    slug: 'bradesco',
+    sector: 'Setor Financeiro & Banking Omnicanal',
+    officialCareersUrl: 'https://bradesco.gupy.io/',
+    recruitmentEmail: 'recrutamento@bradesco.com.br',
+    atsPortal: 'Gupy',
+    primaryHubs: ['Osasco', 'São Paulo', 'Curitiba', 'Rio de Janeiro'],
+    description: 'Uma das maiores instituições financeiras do país com centro tecnológico na Cidade de Deus em Osasco e inovações com o Inovabra.'
+  },
+  {
+    name: 'Banco Santander Brasil',
+    slug: 'santander',
+    sector: 'Banking Global, Cartões & Financiamentos',
+    officialCareersUrl: 'https://santander.gupy.io/',
+    recruitmentEmail: 'talentos@santander.com.br',
+    atsPortal: 'Gupy',
+    primaryHubs: ['São Paulo', 'Campinas', 'Rio de Janeiro', 'Curitiba'],
+    description: 'Terceiro maior banco privado do Brasil, com investimentos contínuos em inteligência analítica de crédito e canais digitais.'
+  },
+  {
+    name: 'Loggi Tecnologia',
+    slug: 'loggi',
+    sector: 'Logística Inteligente & Entregas Expressas',
+    officialCareersUrl: 'https://carreiras.loggi.com/',
+    recruitmentEmail: 'talentos@loggi.com',
+    atsPortal: 'Lever',
+    primaryHubs: ['São Paulo', 'Campinas', 'Remoto / Home Office'],
+    description: 'Unicórnio brasileiro de logística com malha de cross-docking nacional e algoritmos avançados de empacotamento e roteirização.'
   }
 ];
 
@@ -542,12 +812,14 @@ export const executeReal360WebSweep = (params: {
   keyword: string;
   region: DispatchRegionTarget;
   cv?: CV;
+  limit?: number;
 }): SweptJobOpportunity[] => {
   const cleanKeyword = params.keyword?.trim() || 'Desenvolvedor Full Stack';
   const cleanKwLower = cleanKeyword.toLowerCase();
   const city = params.region.city || 'São Paulo';
   const state = params.region.state || 'SP';
   const workModel = params.region.workModel || 'Híbrido';
+  const targetCount = params.limit && params.limit > 0 ? params.limit : 12;
 
   // Identificar se a busca é por empresa específica
   const matchingCompany = REAL_BRAZILIAN_COMPANIES.find(c => 
@@ -558,13 +830,15 @@ export const executeReal360WebSweep = (params: {
   if (matchingCompany) {
     selectedCompanies = [matchingCompany];
     const others = REAL_BRAZILIAN_COMPANIES.filter(c => c.name !== matchingCompany.name);
-    selectedCompanies.push(...others.slice(0, 5));
+    selectedCompanies.push(...others.slice(0, targetCount - 1));
   } else {
     // Escolher empresas com atuação no hub ou formato remoto
     const inHub = REAL_BRAZILIAN_COMPANIES.filter(c => 
       c.primaryHubs.some(h => h.toLowerCase().includes(city.toLowerCase()) || h.toLowerCase().includes('remoto'))
     );
-    selectedCompanies = inHub.length >= 6 ? inHub.slice(0, 6) : REAL_BRAZILIAN_COMPANIES.slice(0, 6);
+    const outsideHub = REAL_BRAZILIAN_COMPANIES.filter(c => !inHub.includes(c));
+    const combined = [...inHub, ...outsideHub];
+    selectedCompanies = combined.slice(0, targetCount);
   }
 
   return selectedCompanies.map((comp, idx) => {

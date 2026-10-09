@@ -68,7 +68,7 @@ export interface BenchmarkPlatform {
   standoutFeatures: string; // Recursos de Destaque
   dailyCapacity: string;
   color: string;
-  icon: React.ReactNode;
+  icon: React.ComponentType<{ size?: number; className?: string; style?: React.CSSProperties }>;
 }
 
 const BENCHMARK_PLATFORMS: BenchmarkPlatform[] = [
@@ -82,7 +82,7 @@ const BENCHMARK_PLATFORMS: BenchmarkPlatform[] = [
     standoutFeatures: 'Otimização de palavras-chave para passar pelos filtros de RH (ATS).',
     dailyCapacity: '20 a 50 candidaturas / dia',
     color: '#0284c7', // Sky Blue
-    icon: <Sparkles size={18} />
+    icon: Sparkles
   },
   {
     id: 'vagaautomatica',
@@ -94,7 +94,7 @@ const BENCHMARK_PLATFORMS: BenchmarkPlatform[] = [
     standoutFeatures: 'Foco em grandes empresas e velocidade de aplicação.',
     dailyCapacity: 'Centenas de vagas / semana',
     color: '#10b981', // Emerald
-    icon: <Zap size={18} />
+    icon: Zap
   },
   {
     id: 'loopcv',
@@ -106,7 +106,7 @@ const BENCHMARK_PLATFORMS: BenchmarkPlatform[] = [
     standoutFeatures: 'Extensão de aplicação inteligente e rastreador de respostas.',
     dailyCapacity: 'Disparo contínuo multi-canal',
     color: '#8b5cf6', // Violet
-    icon: <Activity size={18} />
+    icon: Activity
   },
   {
     id: 'jobcopilot',
@@ -118,7 +118,7 @@ const BENCHMARK_PLATFORMS: BenchmarkPlatform[] = [
     standoutFeatures: 'Descobre e-mails de gestores de contratação diretamente.',
     dailyCapacity: 'Até 50 pedidos personalizados / dia',
     color: '#f59e0b', // Amber
-    icon: <Target size={18} />
+    icon: Target
   }
 ];
 
@@ -340,7 +340,7 @@ export const CVAutoPilot360: React.FC<CVAutoPilot360Props> = ({
       const today = new Date().toISOString().split('T')[0];
       const followUpDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      // Gerar vagas reais baseadas no motor autônomo sem API
+      // Gerar vagas reais baseadas no motor autônomo sem API (100% empresas reais)
       const realJobs = executeReal360WebSweep({
         keyword: targetRole,
         region: {
@@ -348,16 +348,14 @@ export const CVAutoPilot360: React.FC<CVAutoPilot360Props> = ({
           state: activeHub.state,
           workModel
         },
-        cv: activeCv
+        cv: activeCv,
+        limit: dailyQuota
       });
 
-      // Adequar à cota diária
-      const jobsToDispatch: SweptJobOpportunity[] = [];
-      for (let i = 0; i < dailyQuota; i++) {
-        const base = realJobs[i % realJobs.length];
+      // Mapear cada vaga real para os canais selecionados
+      const jobsToDispatch: SweptJobOpportunity[] = realJobs.map((base, i) => {
         const channelName = enabledChannelsList[i % enabledChannelsList.length] || 'Gupy';
-        
-        jobsToDispatch.push({
+        return {
           ...base,
           id: `pilot-360-${Date.now()}-${i}`,
           portal: channelName.includes('Gupy') ? 'Gupy' 
@@ -367,8 +365,8 @@ export const CVAutoPilot360: React.FC<CVAutoPilot360Props> = ({
             : channelName.includes('Gestores') ? 'E-mail Direto (Hiring Manager)'
             : 'Página Oficial de Carreiras',
           destinationType: channelName.includes('Gestores') ? 'email' : 'form'
-        });
-      }
+        };
+      });
 
       setGeneratedJobs(jobsToDispatch);
 
@@ -722,7 +720,7 @@ export const CVAutoPilot360: React.FC<CVAutoPilot360Props> = ({
                           fontWeight: 700
                         }}
                       >
-                        {p.icon}
+                        <p.icon size={18} />
                       </div>
                       <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0, color: colors.textPrimary }}>
                         {p.name}

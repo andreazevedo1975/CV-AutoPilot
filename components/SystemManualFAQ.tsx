@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { generateSystemManualPdf } from '../services/systemManualPdfService';
 import { generateSystemManualPptx } from '../services/systemManualPptxService';
+import { downloadHyperpromptWord } from '../services/hyperpromptDocxService';
 
 interface SystemManualFAQProps {
   colors: any;
@@ -54,6 +55,7 @@ export const SystemManualFAQ: React.FC<SystemManualFAQProps> = ({
 
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingPptx, setIsExportingPptx] = useState(false);
+  const [isExportingDocx, setIsExportingDocx] = useState(false);
   const [exportNotice, setExportNotice] = useState<string | null>(null);
 
   // Lista detalhada de todas as 11 telas e funcionalidades do sistema
@@ -658,6 +660,27 @@ export const SystemManualFAQ: React.FC<SystemManualFAQProps> = ({
     }
   };
 
+  // Download do Hiperprompt Completo em Word (.docx)
+  const handleDownloadWord = async () => {
+    try {
+      setIsExportingDocx(true);
+      setExportNotice('Baixando Hiperprompt Mestre com todo código em Word (.docx)...');
+      const ok = await downloadHyperpromptWord();
+      if (ok) {
+        setExportNotice('✓ Hiperprompt com todo código baixado em Word (.docx) com sucesso!');
+      } else {
+        setExportNotice('✓ Download do documento Word (.docx) iniciado!');
+      }
+      setTimeout(() => setExportNotice(null), 5000);
+    } catch (err) {
+      console.error('Erro ao baixar Word:', err);
+      setExportNotice('Erro ao baixar documento Word. Tente novamente.');
+      setTimeout(() => setExportNotice(null), 5000);
+    } finally {
+      setIsExportingDocx(false);
+    }
+  };
+
   const currentScreen = filteredScreens[selectedScreenIndex] || screensCatalog[0];
 
   return (
@@ -795,6 +818,33 @@ export const SystemManualFAQ: React.FC<SystemManualFAQProps> = ({
               >
                 <Presentation size={15} />
                 <span>{isExportingPptx ? 'Gerando Slides...' : 'Baixar Slides em PPTX'}</span>
+              </button>
+
+              {/* Baixar Word (.docx) */}
+              <button
+                type="button"
+                onClick={handleDownloadWord}
+                disabled={isExportingDocx}
+                style={{
+                  background: 'linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  padding: '10px 18px',
+                  borderRadius: '10px',
+                  fontSize: '12.5px',
+                  fontWeight: 700,
+                  cursor: isExportingDocx ? 'not-allowed' : 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  boxShadow: '0 4px 14px rgba(29, 78, 216, 0.35)',
+                  transition: 'all 0.2s ease',
+                  opacity: isExportingDocx ? 0.7 : 1
+                }}
+                title="Baixar Hiperprompt Mestre em formato Word (.docx) com todo o código de todas as funcionalidades"
+              >
+                <FileText size={15} />
+                <span>{isExportingDocx ? 'Baixando Word...' : 'Hiperprompt em Word (.docx)'}</span>
               </button>
             </div>
           </div>

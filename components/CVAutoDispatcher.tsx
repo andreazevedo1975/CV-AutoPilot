@@ -631,18 +631,18 @@ export const CVAutoDispatcher: React.FC<CVAutoDispatcherProps> = ({
       const today = new Date().toISOString().split('T')[0];
       const followUpDate = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      // Gerar candidaturas baseadas em vagas reais
+      // Gerar candidaturas baseadas em vagas 100% reais sem duplicidade
       const realJobs = executeReal360WebSweep({
         keyword: searchKeyword,
         region: currentRegion,
-        cv: activeCv
+        cv: activeCv,
+        limit: dailyQuota
       });
 
       const newApps: Application[] = [];
       const newHistory: DispatchHistoryRecord[] = [];
 
-      for (let i = 0; i < dailyQuota; i++) {
-        const baseJob = realJobs[i % realJobs.length];
+      realJobs.forEach((baseJob, i) => {
         const channel = targetChannels[i % targetChannels.length] || 'Gupy';
         const isEmailChannel = channel.includes('Gestores') || channel.includes('E-mails');
 
@@ -673,7 +673,7 @@ export const CVAutoDispatcher: React.FC<CVAutoDispatcherProps> = ({
           notes: `Ciclo do Piloto Automático (${dailyQuota}/dia). Canal: ${channel}`,
           detailsSnippet: `Match ATS: 95% • Candidatura automática confirmada em ${channel}`
         });
-      }
+      });
 
       setApplications(prev => [...newApps, ...prev]);
       setDispatchHistory(prev => [...newHistory, ...prev]);

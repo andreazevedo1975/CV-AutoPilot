@@ -13,7 +13,9 @@ echo  portavel para ser distribuido ou executado em qualquer PC Windows.
 echo.
 
 cd /d "%~dp0"
-cd ..
+if not exist "package.json" (
+    cd ..
+)
 
 echo [1/3] Compilando assets de producao com Vite...
 call npm run build
@@ -24,19 +26,19 @@ if %errorlevel% neq 0 (
 )
 
 echo.
-echo [2/3] Instalando Electron Packager temporario...
-call npx --yes electron-packager . "CV-AutoPilot" --platform=win32 --arch=x64 --out=dist-exe --overwrite --icon=src/assets/images/cv_autopilot_logo_1789832318438.jpg --prune=true
+echo [2/3] Empacotando aplicacao para Windows x64...
+call npx --yes electron-packager . "CV-AutoPilot" --platform=win32 --arch=x64 --out=dist-exe --overwrite --prune=true --entry=windows-installer/electron-main.cjs
 
 if %errorlevel% neq 0 (
     echo.
-    echo  Tentando empacotamento alternativo via Nativefier...
-    call npx --yes nativefier --name "CV-AutoPilot" "http://localhost:3000" --icon "src/assets/images/cv_autopilot_logo_1789832318438.jpg" --platform windows --out dist-exe
+    echo  Tentando empacotamento com webview nativa do Windows...
+    call npx --yes nativefier --name "CV-AutoPilot" "http://localhost:3000" --platform windows --out dist-exe
 )
 
 echo.
 echo [3/3] Processo concluido!
 echo  O arquivo executavel (.exe) foi gerado na pasta:
-echo  %~dp0..\dist-exe\
+echo  %cd%\dist-exe\
 echo.
 echo  Voce pode copiar a pasta gerada para qualquer pendrive ou outro computador!
 echo ===============================================================================

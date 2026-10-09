@@ -422,7 +422,7 @@ export class AuthService {
       
       try {
         sessionStorage.setItem(AUTH_USER_SESSION_KEY, JSON.stringify(adminUser));
-        localStorage.setItem(AUTH_USER_SESSION_KEY, JSON.stringify(adminUser));
+        localStorage.removeItem(AUTH_USER_SESSION_KEY);
       } catch {}
 
       return { success: true, user: adminUser, networkIp };
@@ -549,7 +549,7 @@ export class AuthService {
 
           try {
             sessionStorage.setItem(AUTH_USER_SESSION_KEY, JSON.stringify(trialUser));
-            localStorage.setItem(AUTH_USER_SESSION_KEY, JSON.stringify(trialUser));
+            localStorage.removeItem(AUTH_USER_SESSION_KEY);
           } catch {}
 
           return {
@@ -596,7 +596,7 @@ export class AuthService {
 
       try {
         sessionStorage.setItem(AUTH_USER_SESSION_KEY, JSON.stringify(trialUser));
-        localStorage.setItem(AUTH_USER_SESSION_KEY, JSON.stringify(trialUser));
+        localStorage.removeItem(AUTH_USER_SESSION_KEY);
       } catch {}
 
       return {
@@ -626,7 +626,7 @@ export class AuthService {
 
     try {
       sessionStorage.setItem(AUTH_USER_SESSION_KEY, JSON.stringify(guestUser));
-      localStorage.setItem(AUTH_USER_SESSION_KEY, JSON.stringify(guestUser));
+      localStorage.removeItem(AUTH_USER_SESSION_KEY);
     } catch {}
 
     return {
@@ -653,7 +653,7 @@ export class AuthService {
 
     try {
       sessionStorage.setItem(AUTH_USER_SESSION_KEY, JSON.stringify(guestUser));
-      localStorage.setItem(AUTH_USER_SESSION_KEY, JSON.stringify(guestUser));
+      localStorage.removeItem(AUTH_USER_SESSION_KEY);
     } catch {}
 
     return guestUser;
@@ -681,16 +681,10 @@ export class AuthService {
   }
 
   /**
-   * Garante que sempre exista uma sessão ativa válida.
-   * Se nenhuma sessão existir, inicializa automaticamente com o perfil de Ambiente de Teste (Acesso Livre).
-   * Sem necessidade de login Google, senhas ou travas de IP.
+   * Retorna a sessão ativa atual se existir, ou null para exigir a tela de login.
    */
-  public static ensureActiveSession(): AuthUser {
-    const existing = this.getCurrentUser();
-    if (existing) {
-      return existing;
-    }
-    return this.createGuestUser('Ambiente de Teste (Acesso Livre)');
+  public static ensureActiveSession(): AuthUser | null {
+    return this.getCurrentUser();
   }
 
   /**
@@ -752,7 +746,7 @@ export class AuthService {
    */
   public static getCurrentUser(): AuthUser | null {
     try {
-      const stored = sessionStorage.getItem(AUTH_USER_SESSION_KEY) || localStorage.getItem(AUTH_USER_SESSION_KEY);
+      const stored = sessionStorage.getItem(AUTH_USER_SESSION_KEY);
       if (!stored) return null;
 
       const user: AuthUser = JSON.parse(stored);

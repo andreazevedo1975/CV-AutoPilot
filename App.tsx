@@ -33,7 +33,7 @@ import {
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { Application, Theme, AuthUser } from './types';
 import { Monitor, Download, LogOut, User, Globe, DollarSign, TrendingUp, Share2, HardDrive, RefreshCw, Send, BookOpen, HelpCircle } from 'lucide-react';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import WindowsInstallerModal from './components/WindowsInstallerModal';
 import { ExternalAccessModal } from './components/ExternalAccessModal';
 import LoginScreen from './components/LoginScreen';
@@ -62,9 +62,8 @@ export { themes, ThemeContext, defaultThemeContext } from './ThemeContext';
 export type { ThemeColors, ThemeContextType } from './ThemeContext';
 
 const App: React.FC = () => {
-  // Acesso Universal: Qualquer pessoa com a URL acessa diretamente no ambiente de teste
-  // com 100% das funcionalidades liberadas, sem exigir login do Google ou credenciais prévias.
-  const [currentUser, setCurrentUser] = useState<AuthUser>(() => AuthService.ensureActiveSession());
+  // Sessão de autenticação: Ao iniciar a ferramenta ou retornar após sair, inicia na tela de login
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => AuthService.getCurrentUser());
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isScreenFaqModalOpen, setIsScreenFaqModalOpen] = useState(false);
   const [currentView, setCurrentView] = useState<View>('cv-manager');
@@ -83,7 +82,17 @@ const App: React.FC = () => {
   const { pendingCount, isSyncing } = useBackgroundSync();
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
   const [readingScale, setReadingScale] = useLocalStorage<'compact' | 'normal' | 'comfortable'>('cv_autopilot_reading_scale', 'normal');
-  const shouldReduceMotion = useReducedMotion();
+  const [shouldReduceMotion, setShouldReduceMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+      setShouldReduceMotion(mq.matches);
+      const listener = (e: MediaQueryListEvent) => setShouldReduceMotion(e.matches);
+      mq.addEventListener('change', listener);
+      return () => mq.removeEventListener('change', listener);
+    }
+  }, []);
 
   // Aplicar escala de leitura selecionada para garantir leitura 100% completa de qualquer tópico
   useEffect(() => {
@@ -92,13 +101,17 @@ const App: React.FC = () => {
     }
   }, [readingScale]);
 
-  // Verificar parâmetros na URL (ex: ?login=1 ou ?admin=1 para abrir o painel de login/contas sob demanda)
+  // Verificar parâmetros na URL (ex: ?logout=1 para sair, ?login=1 ou ?admin=1 para abrir modal)
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const search = window.location.search;
       if (search) {
         const params = new URLSearchParams(search);
-        if (params.get('login') === '1' || params.get('login') === 'true' || params.get('admin') === '1') {
+        if (params.get('logout') === '1' || params.get('logout') === 'true') {
+          AuthService.logout();
+          setCurrentUser(null);
+          setIsLoginModalOpen(false);
+        } else if (params.get('login') === '1' || params.get('login') === 'true' || params.get('admin') === '1') {
           setIsLoginModalOpen(true);
         }
       }
@@ -139,11 +152,11 @@ const App: React.FC = () => {
   }), [theme, toggleTheme, currentThemeColors]);
 
   const handleLogout = () => {
-    if (window.confirm("Deseja alternar de perfil ou gerenciar sua conta de acesso?")) {
+    if (window.confirm("Deseja sair da ferramenta e retornar à tela de login?")) {
       AuthService.logout();
-      const guestUser = AuthService.createGuestUser('Ambiente de Teste (Acesso Livre)');
-      setCurrentUser(guestUser);
-      setIsLoginModalOpen(true);
+      setCurrentUser(null);
+      setIsLoginModalOpen(false);
+      setMobileDrawerOpen(false);
     }
   };
 
@@ -381,6 +394,13 @@ const App: React.FC = () => {
           badge: 'Seguro',
           subtitle: 'Arquivo consolidado de currículos gerados, cartas de apresentação e diagnósticos.'
         };
+      case 'autopilot-dispatcher':
+        return {
+          category: 'Carreira & Inteligência Artificial',
+          title: 'Piloto Automático 360° (Disparador)',
+          badge: 'CopiVaga • VagaAutomática • Loopcv • JobCopilot',
+          subtitle: 'Disparo autônomo multicanal (20 a 50 candidaturas/dia) em fontes 100% reais (LinkedIn, Gupy, Catho, Indeed e Páginas Oficiais).'
+        };
       case 'cv-dispatcher':
         return {
           category: 'Carreira & Inteligência Artificial',
@@ -432,6 +452,22 @@ const App: React.FC = () => {
     duration: 0.24,
     ease: [0.22, 1, 0.36, 1] as [number, number, number, number]
   };
+
+  // Se o usuário não estiver autenticado (ou após sair e retornar à ferramenta), exibe a tela de login
+  if (!currentUser) {
+    return (
+      <ThemeContext.Provider value={themeContextValue}>
+        <div style={{ minHeight: '100vh', backgroundColor: currentThemeColors.background }}>
+          <LoginScreen
+            onLoginSuccess={(user) => {
+              setCurrentUser(user);
+              setIsLoginModalOpen(false);
+            }}
+          />
+        </div>
+      </ThemeContext.Provider>
+    );
+  }
 
   return (
     <ThemeContext.Provider value={themeContextValue}>
@@ -582,7 +618,7 @@ const App: React.FC = () => {
                     type="button"
                     style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}
                     onClick={handleLogout}
-                    title="Alternar Perfil"
+                    title="Sair da Ferramenta e Retornar ao Login"
                   >
                     <LogOut size={16} color={currentThemeColors.textSecondary} />
                   </button>
@@ -848,7 +884,7 @@ const App: React.FC = () => {
                   type="button"
                   style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}
                   onClick={handleLogout}
-                  title="Alternar Perfil"
+                  title="Sair da Ferramenta e Retornar ao Login"
                 >
                   <LogOut size={16} color={currentThemeColors.textSecondary} />
                 </button>
